@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Start MLflow + seed demo data
+        run: |
+          docker compose up -d mlflow
+          # wait until healthy (max ~2 min)
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:5050/health > /dev/null; then
+              echo "mlflow ready"
+              break
+            fi
+            sleep 2
+          done
+          docker compose run --rm seed
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Run smoke against live MLflow
+        run: node dev/smoke.mjs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: "v8.30.0"
+          GITLEAKS_SHA256: "79a3ab579b53f71efd634f3aaf7e04a0fa0cf206b7ed434638d1547a2470a66e"
+        run: |
+          TARBALL="gitleaks_${GITLEAKS_VERSION#v}_linux_x64.tar.gz"
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/${TARBALL}" -o "${TARBALL}"
+          echo "${GITLEAKS_SHA256}  ${TARBALL}" | sha256sum -c -
+          tar xzf "${TARBALL}"
+          sudo mv gitleaks /usr/local/bin/
+      - name: Run gitleaks
+        run: gitleaks detect --source . --verbose --redact

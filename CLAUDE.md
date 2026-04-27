@@ -87,7 +87,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - [x] `logged-models/*` 도구 신설
 - [x] 편의 도구: `compare-runs`, `get-best-run`, `search-runs-by-tags`
 - [x] MCP Prompts로 흔한 워크플로우 템플릿 제공
-- [ ] CI: smoke.mjs를 GitHub Actions에서 docker compose 띄워 자동 실행
+- [x] CI: smoke.mjs를 GitHub Actions에서 docker compose 띄워 자동 실행
 - [ ] 인증 테스트: Databricks PAT/Basic auth 경로 검증
 - [ ] MCP Resources: 자주 보는 객체(experiment, run, registered-model)를 리소스 URI로 노출
 - [ ] `extract_fields`를 search-runs / get-run에도 적용
