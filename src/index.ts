@@ -1,10 +1,19 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler } from "./tools/utils.js";
 import { registerPrompts } from "./prompts.js";
+
+// Read version from package.json so MCP `serverInfo.version` stays in sync with
+// the published npm version. Source path is `src/index.ts` and built path is
+// `dist/index.js` — both resolve `../package.json` to the package root.
+const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+const { version: pkgVersion } = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version: string };
 
 import {
   createExperimentSchema, createExperiment,
@@ -91,7 +100,7 @@ validateConfig();
 
 const server = new McpServer({
   name: "mlflow",
-  version: "1.0.0",
+  version: pkgVersion,
 });
 
 // --- Experiments ---
