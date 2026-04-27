@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
   "main": "dist/index.js",
@@ -16,6 +16,10 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "presmoke": "pnpm run build",
+    "smoke": "node dev/smoke.mjs",
     "prepublishOnly": "tsc"
   },
   "dependencies": {
@@ -25,7 +29,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
-    "typescript": "^5.9.3"
+    "@vitest/coverage-v8": "^4.1.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.5"
   },
   "engines": {
     "node": ">=18.0.0"

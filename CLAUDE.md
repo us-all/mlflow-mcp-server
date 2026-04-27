@@ -51,7 +51,8 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항 (2026-04-27)
 
-- **확장**: 도구 55→66, 프롬프트 신규 4개. **76/76 통과** (스모크 검증)
+- v1.1.1 패치: docker 멀티 아키텍처 (linux/amd64 + linux/arm64), vitest 단위 테스트 20개 추가, 문서 3종 (CHANGELOG/SECURITY/CONTRIBUTING)
+- v1.1.0 마이너: 도구 55→66, 프롬프트 신규 4개. **76/76 통과** (스모크 검증)
 - `extract_fields` 파라미터 도입 (`search-traces`, `get-trace`) — 콤마 구분 dotted path + `*` 와일드카드, `applyExtractFields` (utils.ts) 트리 기반 프로젝션
 - 편의 도구 3개 추가 (`runs.ts`):
   - `get-best-run` — metric 기준 최고/최저 run
@@ -91,6 +92,9 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - [ ] 인증 테스트: Databricks PAT/Basic auth 경로 검증
 - [ ] MCP Resources: 자주 보는 객체(experiment, run, registered-model)를 리소스 URI로 노출
 - [ ] `extract_fields`를 search-runs / get-run에도 적용
+- [x] vitest 단위 테스트 (config, extract-fields, sanitize)
+- [x] CHANGELOG / SECURITY / CONTRIBUTING 문서
+- [x] docker 멀티 아키텍처
 
 ## 다른 MLflow MCP와의 위치
 
