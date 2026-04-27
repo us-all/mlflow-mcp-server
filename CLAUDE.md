@@ -7,7 +7,7 @@
 `@us-all/mlflow-mcp` — MLflow REST API를 MCP stdio 서버로 노출하는 TypeScript 구현. 66개 도구 + 4개 워크플로우 프롬프트로 experiments / runs / registered-models / model-versions / logged-models(v3) / traces / assessments 전 영역 커버. 쓰기는 `MLFLOW_ALLOW_WRITE=true`로 명시 옵트인.
 
 - **타겟 MLflow**: 3.5.1+ (v3 traces/assessments REST 사용)
-- **런타임**: Node 18+, stdio transport
+- **런타임**: Node 20+, stdio transport (vitest 4 의존성)
 - **인증**: Bearer 토큰(Databricks PAT) / Basic auth
 - **빌드**: `pnpm build` → `dist/index.js`
 

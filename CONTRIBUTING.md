@@ -41,7 +41,7 @@ MLFLOW_TRACKING_URI=http://localhost:5050 \
 
 Smoke requires the docker compose MLflow to be up + seeded.
 
-CI runs both on every push/PR (matrix: Node 18/20/22 for build+unit;
+CI runs both on every push/PR (matrix: Node 20/22 for build+unit;
 Node 22 for smoke against a Compose'd MLflow).
 
 ## Adding a new tool

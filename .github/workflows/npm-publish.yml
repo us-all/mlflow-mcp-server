@@ -40,6 +40,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
+      - name: Run unit tests (gate)
+        run: pnpm test
 
       - name: Preflight dry-run
         run: npm publish --access public --provenance --dry-run

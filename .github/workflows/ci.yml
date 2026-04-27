@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -24,7 +24,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm test
+      - name: Run unit tests (Node 20+)
+        if: matrix.node-version >= 20
+        run: pnpm test
 
   smoke:
     runs-on: ubuntu-latest

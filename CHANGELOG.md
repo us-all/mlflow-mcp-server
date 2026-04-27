@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-04-27
+
+### Changed
+- **Minimum Node bumped to 20.x** (`engines.node: ">=20.0.0"`). Node 18 reached EOL
+  in April 2025; vitest 4 also requires `node:util.styleText` (Node 20.12+).
+  CI matrix is now `[20, 22]`. v1.1.1 CI failed because of this — fixed in v1.1.2.
+
+### Fixed
+- **Publish workflows now gate on tests.** `npm-publish.yml` and `docker-publish.yml`
+  now run `pnpm test` before publishing. Previously they only ran `build`, so v1.1.1
+  was published to npm even though `ci.yml` had failed (the workflows were independent).
+  This was a structural CI/CD weakness.
+
 ## [1.1.1] - 2026-04-27
 
 ### Added
