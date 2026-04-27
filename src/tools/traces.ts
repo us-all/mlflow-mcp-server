@@ -1,0 +1,99 @@
+import { z } from "zod/v4";
+import { mlflowClient } from "../client.js";
+import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
+
+// --- search-traces ---
+
+export const searchTracesSchema = z.object({
+  experimentIds: z.array(z.string()).optional().describe("Experiment IDs (defaults to MLFLOW_EXPERIMENT_ID)"),
+  filter: z.string().optional().describe("Filter expression (e.g. \"tags.user = 'alice'\")"),
+  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
+  orderBy: z.array(z.string()).optional(),
+  pageToken: z.string().optional(),
+});
+
+export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
+  const ids = params.experimentIds && params.experimentIds.length > 0
+    ? params.experimentIds
+    : [resolveExperimentId()];
+  return mlflowClient.post("/api/3.0/mlflow/traces/search", {
+    locations: ids.map((experiment_id) => ({
+      type: "MLFLOW_EXPERIMENT",
+      mlflow_experiment: { experiment_id },
+    })),
+    filter: params.filter,
+    max_results: params.maxResults,
+    order_by: params.orderBy,
+    page_token: params.pageToken,
+  });
+}
+
+// --- get-trace ---
+
+export const getTraceSchema = z.object({
+  traceId: z.string().describe("Trace ID"),
+});
+
+export async function getTrace(params: z.infer<typeof getTraceSchema>) {
+  return mlflowClient.get(`/api/3.0/mlflow/traces/${encodeURIComponent(params.traceId)}`);
+}
+
+// --- get-trace-info ---
+
+export const getTraceInfoSchema = z.object({
+  traceId: z.string().describe("Trace ID"),
+});
+
+export async function getTraceInfo(params: z.infer<typeof getTraceInfoSchema>) {
+  return mlflowClient.get(`/api/2.0/mlflow/traces/${encodeURIComponent(params.traceId)}/info`);
+}
+
+// --- delete-traces ---
+
+export const deleteTracesSchema = z.object({
+  experimentId: z.string().optional().describe("Experiment ID (defaults to MLFLOW_EXPERIMENT_ID)"),
+  traceIds: z.array(z.string()).optional().describe("Specific trace IDs to delete"),
+  maxTimestampMillis: z.number().optional().describe("Delete traces older than this timestamp (ms)"),
+  maxTraces: z.number().optional().describe("Maximum number of traces to delete"),
+});
+
+export async function deleteTraces(params: z.infer<typeof deleteTracesSchema>) {
+  assertWriteAllowed();
+  return mlflowClient.post("/api/2.0/mlflow/traces/delete-traces", {
+    experiment_id: resolveExperimentId(params.experimentId),
+    request_ids: params.traceIds,
+    max_timestamp_millis: params.maxTimestampMillis,
+    max_traces: params.maxTraces,
+  });
+}
+
+// --- set-trace-tag ---
+
+export const setTraceTagSchema = z.object({
+  traceId: z.string(),
+  key: z.string().describe("Tag key"),
+  value: z.string().describe("Tag value"),
+});
+
+export async function setTraceTag(params: z.infer<typeof setTraceTagSchema>) {
+  assertWriteAllowed();
+  return mlflowClient.patch(
+    `/api/2.0/mlflow/traces/${encodeURIComponent(params.traceId)}/tags`,
+    { key: params.key, value: params.value },
+  );
+}
+
+// --- delete-trace-tag ---
+
+export const deleteTraceTagSchema = z.object({
+  traceId: z.string(),
+  key: z.string().describe("Tag key to remove"),
+});
+
+export async function deleteTraceTag(params: z.infer<typeof deleteTraceTagSchema>) {
+  assertWriteAllowed();
+  return mlflowClient.delete(
+    `/api/2.0/mlflow/traces/${encodeURIComponent(params.traceId)}/tags`,
+    { key: params.key },
+  );
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@us-all/mlflow-mcp",
+  "version": "1.0.0",
+  "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mlflow-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "dotenv": "^17.3.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "pnpm@10.30.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/us-all/mlflow-mcp-server"
+  },
+  "license": "MIT"
+}
