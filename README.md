@@ -63,13 +63,13 @@ docker run --rm -i \
 | `MLFLOW_EXPERIMENT_ID` | No | Default experiment ID for tools that accept it implicitly |
 | `MLFLOW_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
 
-## Tools
+## Tools (66)
 
 ### Experiments (9)
 `create-experiment` `search-experiments` `get-experiment` `get-experiment-by-name` `update-experiment` `delete-experiment` `restore-experiment` `set-experiment-tag` `delete-experiment-tag`
 
-### Runs (14)
-`create-run` `get-run` `search-runs` `update-run` `delete-run` `restore-run` `log-metric` `log-param` `log-batch` `log-inputs` `get-metric-history` `set-run-tag` `delete-run-tag` `list-artifacts`
+### Runs (17)
+`create-run` `get-run` `search-runs` `update-run` `delete-run` `restore-run` `log-metric` `log-param` `log-batch` `log-inputs` `get-metric-history` `set-run-tag` `delete-run-tag` `list-artifacts` `get-best-run` `compare-runs` `search-runs-by-tags`
 
 ### Registered Models (12)
 `create-registered-model` `get-registered-model` `search-registered-models` `rename-registered-model` `update-registered-model` `delete-registered-model` `get-latest-model-versions` `set-registered-model-tag` `delete-registered-model-tag` `set-registered-model-alias` `delete-registered-model-alias` `get-model-version-by-alias`
@@ -77,11 +77,24 @@ docker run --rm -i \
 ### Model Versions (9)
 `create-model-version` `get-model-version` `search-model-versions` `update-model-version` `delete-model-version` `transition-model-version-stage` `get-model-version-download-uri` `set-model-version-tag` `delete-model-version-tag`
 
+### Logged Models — MLflow 3 (8)
+`create-logged-model` `search-logged-models` `get-logged-model` `finalize-logged-model` `delete-logged-model` `set-logged-model-tags` `delete-logged-model-tag` `log-logged-model-params`
+
 ### Traces (6)
 `search-traces` `get-trace` `get-trace-info` `delete-traces` `set-trace-tag` `delete-trace-tag`
 
+`search-traces` and `get-trace` accept an `extractFields` parameter (comma-separated dotted paths with `*` wildcard) to slice the response and reduce token usage.
+
 ### Assessments (5)
 `log-feedback` `log-expectation` `get-assessment` `update-assessment` `delete-assessment`
+
+## Prompts (4)
+
+Workflow templates that compose multiple tool calls. Available via MCP `prompts/list`:
+- `debug-failed-traces` — find failed traces and group failure modes
+- `promote-best-run` — find best run, register, set `champion` alias
+- `compare-top-runs` — top-N comparison by metric
+- `annotate-trace-quality` — guided feedback annotation loop
 
 ## Local Development
 
@@ -99,7 +112,7 @@ Brings up an MLflow tracking server (SQLite + local artifact store) so you can e
 # 1. start MLflow (UI at http://localhost:5050)
 docker compose up -d mlflow
 
-# 2. seed demo experiment, runs, and a registered model with a 'champion' alias
+# 2. seed demo experiment, runs, registered model with 'champion' alias, and traces
 docker compose run --rm seed
 
 # 3a. probe the MCP server locally against the compose'd MLflow

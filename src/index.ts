@@ -4,6 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler } from "./tools/utils.js";
+import { registerPrompts } from "./prompts.js";
 
 import {
   createExperimentSchema, createExperiment,
@@ -31,6 +32,9 @@ import {
   setRunTagSchema, setRunTag,
   deleteRunTagSchema, deleteRunTag,
   listArtifactsSchema, listArtifacts,
+  getBestRunSchema, getBestRun,
+  compareRunsSchema, compareRuns,
+  searchRunsByTagsSchema, searchRunsByTags,
 } from "./tools/runs.js";
 import {
   createRegisteredModelSchema, createRegisteredModel,
@@ -57,6 +61,16 @@ import {
   setModelVersionTagSchema, setModelVersionTag,
   deleteModelVersionTagSchema, deleteModelVersionTag,
 } from "./tools/model-versions.js";
+import {
+  createLoggedModelSchema, createLoggedModel,
+  searchLoggedModelsSchema, searchLoggedModels,
+  getLoggedModelSchema, getLoggedModel,
+  finalizeLoggedModelSchema, finalizeLoggedModel,
+  deleteLoggedModelSchema, deleteLoggedModel,
+  setLoggedModelTagsSchema, setLoggedModelTags,
+  deleteLoggedModelTagSchema, deleteLoggedModelTag,
+  logLoggedModelParamsSchema, logLoggedModelParams,
+} from "./tools/logged-models.js";
 import {
   searchTracesSchema, searchTraces,
   getTraceSchema, getTrace,
@@ -108,6 +122,9 @@ server.tool("get-metric-history", "Get full history of a metric for a run", getM
 server.tool("set-run-tag", "Set a tag on a run", setRunTagSchema.shape, wrapToolHandler(setRunTag));
 server.tool("delete-run-tag", "Delete a tag from a run", deleteRunTagSchema.shape, wrapToolHandler(deleteRunTag));
 server.tool("list-artifacts", "List artifacts under a run's artifact directory", listArtifactsSchema.shape, wrapToolHandler(listArtifacts));
+server.tool("get-best-run", "Find the run with the best (max/min) value of a metric in an experiment", getBestRunSchema.shape, wrapToolHandler(getBestRun));
+server.tool("compare-runs", "Side-by-side metric/param comparison across multiple runs", compareRunsSchema.shape, wrapToolHandler(compareRuns));
+server.tool("search-runs-by-tags", "Find runs whose tags match all of the given key/value pairs", searchRunsByTagsSchema.shape, wrapToolHandler(searchRunsByTags));
 
 // --- Registered Models ---
 
@@ -136,6 +153,17 @@ server.tool("get-model-version-download-uri", "Get the artifact download URI for
 server.tool("set-model-version-tag", "Set a tag on a model version", setModelVersionTagSchema.shape, wrapToolHandler(setModelVersionTag));
 server.tool("delete-model-version-tag", "Delete a tag from a model version", deleteModelVersionTagSchema.shape, wrapToolHandler(deleteModelVersionTag));
 
+// --- Logged Models (MLflow 3) ---
+
+server.tool("create-logged-model", "Create a new MLflow 3 LoggedModel entity in an experiment", createLoggedModelSchema.shape, wrapToolHandler(createLoggedModel));
+server.tool("search-logged-models", "Search LoggedModels by experiment with filter and pagination", searchLoggedModelsSchema.shape, wrapToolHandler(searchLoggedModels));
+server.tool("get-logged-model", "Get a LoggedModel by ID", getLoggedModelSchema.shape, wrapToolHandler(getLoggedModel));
+server.tool("finalize-logged-model", "Set a terminal status (READY/FAILED/...) on a LoggedModel", finalizeLoggedModelSchema.shape, wrapToolHandler(finalizeLoggedModel));
+server.tool("delete-logged-model", "Soft-delete a LoggedModel by ID", deleteLoggedModelSchema.shape, wrapToolHandler(deleteLoggedModel));
+server.tool("set-logged-model-tags", "Set or upsert tags on a LoggedModel", setLoggedModelTagsSchema.shape, wrapToolHandler(setLoggedModelTags));
+server.tool("delete-logged-model-tag", "Delete a tag from a LoggedModel", deleteLoggedModelTagSchema.shape, wrapToolHandler(deleteLoggedModelTag));
+server.tool("log-logged-model-params", "Log parameters on a LoggedModel", logLoggedModelParamsSchema.shape, wrapToolHandler(logLoggedModelParams));
+
 // --- Traces ---
 
 server.tool("search-traces", "Search and filter traces in experiments", searchTracesSchema.shape, wrapToolHandler(searchTraces));
@@ -152,6 +180,8 @@ server.tool("log-expectation", "Log a ground-truth expectation on a trace", logE
 server.tool("get-assessment", "Get an assessment by trace ID and assessment ID", getAssessmentSchema.shape, wrapToolHandler(getAssessment));
 server.tool("update-assessment", "Update an existing assessment", updateAssessmentSchema.shape, wrapToolHandler(updateAssessment));
 server.tool("delete-assessment", "Delete an assessment from a trace", deleteAssessmentSchema.shape, wrapToolHandler(deleteAssessment));
+
+registerPrompts(server);
 
 async function main() {
   const transport = new StdioServerTransport();

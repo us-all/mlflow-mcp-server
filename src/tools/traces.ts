@@ -1,6 +1,6 @@
 import { z } from "zod/v4";
 import { mlflowClient } from "../client.js";
-import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
+import { applyExtractFields, assertWriteAllowed, resolveExperimentId } from "./utils.js";
 
 // --- search-traces ---
 
@@ -10,13 +10,17 @@ export const searchTracesSchema = z.object({
   maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
   orderBy: z.array(z.string()).optional(),
   pageToken: z.string().optional(),
+  extractFields: z.string().optional().describe(
+    "Comma-separated dotted paths to keep in the response (supports `*` wildcard). " +
+    "E.g. \"traces.*.trace_id,traces.*.trace_location\". Drops unmatched fields to save tokens.",
+  ),
 });
 
 export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
   const ids = params.experimentIds && params.experimentIds.length > 0
     ? params.experimentIds
     : [resolveExperimentId()];
-  return mlflowClient.post("/api/3.0/mlflow/traces/search", {
+  const result = await mlflowClient.post("/api/3.0/mlflow/traces/search", {
     locations: ids.map((experiment_id) => ({
       type: "MLFLOW_EXPERIMENT",
       mlflow_experiment: { experiment_id },
@@ -26,16 +30,24 @@ export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
     order_by: params.orderBy,
     page_token: params.pageToken,
   });
+  return applyExtractFields(result, params.extractFields);
 }
 
 // --- get-trace ---
 
 export const getTraceSchema = z.object({
   traceId: z.string().describe("Trace ID"),
+  extractFields: z.string().optional().describe(
+    "Comma-separated dotted paths to keep (supports `*`). " +
+    "E.g. \"trace.info.trace_id,trace.data.spans.*.name\".",
+  ),
 });
 
 export async function getTrace(params: z.infer<typeof getTraceSchema>) {
-  return mlflowClient.get(`/api/3.0/mlflow/traces/${encodeURIComponent(params.traceId)}`);
+  const result = await mlflowClient.get(
+    `/api/3.0/mlflow/traces/${encodeURIComponent(params.traceId)}`,
+  );
+  return applyExtractFields(result, params.extractFields);
 }
 
 // --- get-trace-info ---

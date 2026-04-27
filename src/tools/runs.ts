@@ -243,3 +243,134 @@ export async function listArtifacts(params: z.infer<typeof listArtifactsSchema>)
     page_token: params.pageToken,
   });
 }
+
+// --- get-best-run (convenience) ---
+//
+// Searches an experiment for the run with the best value of a given metric.
+// Higher = better unless `ascending` is true (e.g. minimizing loss).
+//
+// Composed of /runs/search; no extra MLflow endpoint.
+
+export const getBestRunSchema = z.object({
+  experimentId: z.string().optional().describe("Experiment ID (defaults to MLFLOW_EXPERIMENT_ID)"),
+  metric: z.string().describe("Metric key to optimize on (e.g. 'accuracy', 'loss')"),
+  ascending: z.boolean().optional().default(false).describe("True to minimize (e.g. loss); false (default) to maximize"),
+  filter: z.string().optional().describe("Additional filter expression on top of the metric ordering"),
+});
+
+interface SearchRunsResponse {
+  runs?: Array<{ info?: { run_id?: string }; data?: unknown }>;
+}
+
+export async function getBestRun(params: z.infer<typeof getBestRunSchema>) {
+  const expId = resolveExperimentId(params.experimentId);
+  const direction = params.ascending ? "ASC" : "DESC";
+  const result = await mlflowClient.post<SearchRunsResponse>("/runs/search", {
+    experiment_ids: [expId],
+    filter: params.filter,
+    max_results: 1,
+    order_by: [`metrics.${params.metric} ${direction}`],
+  });
+  const top = result.runs?.[0];
+  if (!top) {
+    return { run: null, message: `No runs matched in experiment ${expId}` };
+  }
+  return { run: top, ranked_by: params.metric, direction };
+}
+
+// --- compare-runs (convenience) ---
+//
+// Fetches multiple runs and produces a side-by-side summary of their metrics
+// and parameters. Diff/identical helpers are calculated client-side.
+
+export const compareRunsSchema = z.object({
+  runIds: z.array(z.string()).min(2).describe("Run IDs to compare (>= 2)"),
+  metricKeys: z.array(z.string()).optional().describe("Restrict to specific metric keys"),
+  paramKeys: z.array(z.string()).optional().describe("Restrict to specific parameter keys"),
+});
+
+interface RunResponse {
+  run?: {
+    info?: Record<string, unknown>;
+    data?: {
+      metrics?: Array<{ key: string; value: number; step?: number }>;
+      params?: Array<{ key: string; value: string }>;
+      tags?: Array<{ key: string; value: string }>;
+    };
+  };
+}
+
+export async function compareRuns(params: z.infer<typeof compareRunsSchema>) {
+  const fetched = await Promise.all(
+    params.runIds.map((runId) => mlflowClient.get<RunResponse>("/runs/get", { run_id: runId })),
+  );
+
+  const metrics: Record<string, Record<string, number | null>> = {};
+  const paramsTable: Record<string, Record<string, string | null>> = {};
+  const summary: Array<{ run_id: string; status?: unknown; run_name?: unknown; start_time?: unknown }> = [];
+
+  for (let i = 0; i < params.runIds.length; i++) {
+    const runId = params.runIds[i];
+    const r = fetched[i].run;
+    summary.push({
+      run_id: runId,
+      run_name: r?.info?.run_name,
+      status: r?.info?.status,
+      start_time: r?.info?.start_time,
+    });
+    for (const m of r?.data?.metrics ?? []) {
+      if (params.metricKeys && !params.metricKeys.includes(m.key)) continue;
+      metrics[m.key] = metrics[m.key] ?? {};
+      metrics[m.key][runId] = m.value;
+    }
+    for (const p of r?.data?.params ?? []) {
+      if (params.paramKeys && !params.paramKeys.includes(p.key)) continue;
+      paramsTable[p.key] = paramsTable[p.key] ?? {};
+      paramsTable[p.key][runId] = p.value;
+    }
+  }
+
+  // Fill missing entries with null so each row has every run column.
+  for (const runId of params.runIds) {
+    for (const m of Object.keys(metrics)) if (!(runId in metrics[m])) metrics[m][runId] = null;
+    for (const p of Object.keys(paramsTable)) if (!(runId in paramsTable[p])) paramsTable[p][runId] = null;
+  }
+
+  // Identify params that differ across runs — useful diff signal.
+  const differingParams = Object.entries(paramsTable)
+    .filter(([, row]) => new Set(Object.values(row)).size > 1)
+    .map(([k]) => k);
+
+  return {
+    runs: summary,
+    metrics,
+    params: paramsTable,
+    differing_params: differingParams,
+  };
+}
+
+// --- search-runs-by-tags (convenience) ---
+//
+// Composes a `tags.<key> = "<value>"` filter from a key/value object.
+
+export const searchRunsByTagsSchema = z.object({
+  experimentIds: z.array(z.string()).optional().describe("Experiment IDs (defaults to MLFLOW_EXPERIMENT_ID)"),
+  tags: z.record(z.string(), z.string()).describe("Tag key/value pairs to AND together"),
+  maxResults: z.coerce.number().optional().default(100),
+  orderBy: z.array(z.string()).optional(),
+});
+
+export async function searchRunsByTags(params: z.infer<typeof searchRunsByTagsSchema>) {
+  const ids = params.experimentIds && params.experimentIds.length > 0
+    ? params.experimentIds
+    : [resolveExperimentId()];
+  const filter = Object.entries(params.tags)
+    .map(([k, v]) => `tags.\`${k}\` = "${v.replace(/"/g, '\\"')}"`)
+    .join(" and ");
+  return mlflowClient.post("/runs/search", {
+    experiment_ids: ids,
+    filter,
+    max_results: params.maxResults,
+    order_by: params.orderBy,
+  });
+}

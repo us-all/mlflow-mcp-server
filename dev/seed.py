@@ -64,6 +64,31 @@ def seed_registered_model(run_ids: list[str]) -> None:
         client.set_registered_model_alias(MODEL_NAME, "champion", latest.version)
 
 
+def seed_traces(experiment_id: str, n: int = 2) -> list[str]:
+    mlflow.set_experiment(experiment_id=experiment_id)
+
+    @mlflow.trace
+    def respond(question: str) -> str:
+        with mlflow.start_span(name="retrieve") as s:
+            s.set_inputs({"q": question})
+            s.set_outputs({"docs": [f"doc-{i}" for i in range(3)]})
+        with mlflow.start_span(name="generate") as s:
+            s.set_inputs({"q": question, "context_docs": 3})
+            s.set_outputs({"answer": f"answer-for-{question}"})
+        return f"answer-for-{question}"
+
+    trace_ids: list[str] = []
+    for i in range(n):
+        respond(f"q-{i}")
+    # Pull the just-created traces back so callers know their IDs.
+    traces = client.search_traces([experiment_id], max_results=n)
+    for t in traces:
+        tid = getattr(t.info, "trace_id", None) or getattr(t.info, "request_id", None)
+        if tid:
+            trace_ids.append(tid)
+    return trace_ids
+
+
 def main() -> None:
     experiment_id = get_or_create_experiment(EXPERIMENT_NAME)
     existing = client.search_runs([experiment_id], max_results=1)
@@ -76,6 +101,8 @@ def main() -> None:
     print(f"  created {len(run_ids)} runs")
     seed_registered_model(run_ids)
     print(f"  registered model '{MODEL_NAME}' with versions and 'champion' alias")
+    trace_ids = seed_traces(experiment_id, n=2)
+    print(f"  created {len(trace_ids)} traces")
     print("done.")
 
 

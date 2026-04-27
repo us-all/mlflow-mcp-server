@@ -94,6 +94,29 @@ const PREFIX = `mcp-smoke-${Date.now()}`;
   });
   notify("notifications/initialized", {});
 
+  // === MCP prompts ===
+  const promptsList = await rpc("prompts/list", {});
+  const promptCount = promptsList?.result?.prompts?.length ?? 0;
+  if (promptCount >= 4) {
+    results.push({ name: "prompts/list", ok: true });
+    console.log(`✓ prompts/list (${promptCount} prompts)`);
+  } else {
+    results.push({ name: "prompts/list", ok: false, info: `expected ≥4, got ${promptCount}` });
+    console.log(`✗ prompts/list (${promptCount})`);
+  }
+  const getPrompt = await rpc("prompts/get", {
+    name: "promote-best-run",
+    arguments: { experimentId: "1", metric: "accuracy", modelName: "demo-classifier" },
+  });
+  const msg = getPrompt?.result?.messages?.[0]?.content?.text ?? "";
+  if (msg.includes("get-best-run") && msg.includes("create-model-version")) {
+    results.push({ name: "prompts/get:promote-best-run", ok: true });
+    console.log(`✓ prompts/get:promote-best-run`);
+  } else {
+    results.push({ name: "prompts/get:promote-best-run", ok: false, info: msg.slice(0, 100) });
+    console.log(`✗ prompts/get:promote-best-run`);
+  }
+
   // === read-only on existing seed data ===
   await call("search-experiments", { maxResults: 10 });
   await call("get-experiment", { experimentId: "1" });
@@ -106,6 +129,31 @@ const PREFIX = `mcp-smoke-${Date.now()}`;
   await call("get-run", { runId: seedRunId });
   await call("get-metric-history", { runId: seedRunId, metricKey: "loss" });
   await call("list-artifacts", { runId: seedRunId });
+
+  // === convenience tools (read-only) ===
+  const best = await call("get-best-run", { experimentId: "1", metric: "accuracy", ascending: false });
+  if (!best?.run?.info?.run_id) {
+    results.push({ name: "get-best-run:check", ok: false, info: "no run returned" });
+    console.log("✗ get-best-run:check");
+  } else {
+    results.push({ name: "get-best-run:check", ok: true });
+    console.log("✓ get-best-run:check");
+  }
+
+  // pick 2 run ids from the experiment for compare-runs
+  const compareIds = (runsResp?.runs ?? []).slice(0, 2).map(r => r.info.run_id);
+  if (compareIds.length === 2) {
+    const cmp = await call("compare-runs", { runIds: compareIds });
+    if (!cmp?.metrics || !cmp?.params || !Array.isArray(cmp?.differing_params)) {
+      results.push({ name: "compare-runs:shape", ok: false, info: "missing fields" });
+      console.log("✗ compare-runs:shape");
+    } else {
+      results.push({ name: "compare-runs:shape", ok: true });
+      console.log(`✓ compare-runs:shape (differing params: ${cmp.differing_params.length})`);
+    }
+  }
+
+  await call("search-runs-by-tags", { experimentIds: ["1"], tags: { owner: "demo", env: "local" }, maxResults: 5 });
 
   await call("search-registered-models", { maxResults: 10 });
   await call("get-registered-model", { name: "demo-classifier" });
@@ -128,6 +176,33 @@ const PREFIX = `mcp-smoke-${Date.now()}`;
   if (seedTraceId) {
     await call("get-trace", { traceId: seedTraceId });
     await call("get-trace-info", { traceId: seedTraceId });
+
+    // extract_fields smoke
+    const sliced = await call("search-traces", {
+      experimentIds: ["1"],
+      maxResults: 2,
+      extractFields: "traces.*.trace_id,traces.*.trace_location",
+    });
+    const t = sliced?.traces?.[0];
+    if (!t || !("trace_id" in t) || "tags" in t) {
+      results.push({ name: "extract_fields:search-traces", ok: false, info: `unexpected shape: ${JSON.stringify(t).slice(0,200)}` });
+      console.log(`✗ extract_fields:search-traces — unexpected shape`);
+    } else {
+      results.push({ name: "extract_fields:search-traces", ok: true });
+      console.log(`✓ extract_fields:search-traces (kept ${Object.keys(t).length} keys)`);
+    }
+    const slicedTrace = await call("get-trace", {
+      traceId: seedTraceId,
+      extractFields: "trace.trace_info.trace_id",
+    });
+    const ti = slicedTrace?.trace?.trace_info;
+    if (!ti || !("trace_id" in ti) || Object.keys(ti).length !== 1) {
+      results.push({ name: "extract_fields:get-trace", ok: false, info: `unexpected: ${JSON.stringify(slicedTrace).slice(0,200)}` });
+      console.log(`✗ extract_fields:get-trace`);
+    } else {
+      results.push({ name: "extract_fields:get-trace", ok: true });
+      console.log(`✓ extract_fields:get-trace`);
+    }
   }
 
   // === write: experiment ===
@@ -191,6 +266,26 @@ const PREFIX = `mcp-smoke-${Date.now()}`;
   // rename
   const renamedModel = `${modelName}-renamed`;
   await call("rename-registered-model", { name: modelName, newName: renamedModel });
+
+  // === logged-models (MLflow 3) ===
+  const lm = await call("create-logged-model", {
+    experimentId: expId,
+    name: `${PREFIX}-lm`,
+    modelType: "sklearn",
+    sourceRunId: runId,
+    params: [{ key: "alpha", value: "0.5" }],
+    tags: [{ key: "phase", value: "smoke" }],
+  });
+  const lmId = lm?.model?.info?.model_id;
+  if (!lmId) throw new Error("create-logged-model failed");
+
+  await call("get-logged-model", { modelId: lmId });
+  await call("search-logged-models", { experimentIds: [expId], maxResults: 5 });
+  await call("set-logged-model-tags", { modelId: lmId, tags: [{ key: "smoke", value: "yes" }] });
+  await call("delete-logged-model-tag", { modelId: lmId, key: "smoke" });
+  await call("log-logged-model-params", { modelId: lmId, params: [{ key: "extra", value: "v" }] });
+  await call("finalize-logged-model", { modelId: lmId, status: "READY" });
+  await call("delete-logged-model", { modelId: lmId });
 
   // === traces: write ===
   if (seedTraceId) {
