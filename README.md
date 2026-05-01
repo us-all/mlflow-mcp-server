@@ -1,10 +1,10 @@
 # MLflow MCP Server
 
-[![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md)
+[![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
 MCP server for [MLflow](https://mlflow.org/) — covers experiments, runs, registered models, model versions, traces, and assessments. Read-only by default.
 
-> Authored to the [@us-all MCP Standard](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md) — token-efficient by design.
+> Authored to the [@us-all MCP Standard](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md) — token-efficient by design.
 
 References:
 - MLflow MCP overview: https://mlflow.org/docs/latest/genai/mcp/
