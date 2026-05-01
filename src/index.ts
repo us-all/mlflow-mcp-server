@@ -103,6 +103,7 @@ import {
   deleteWebhookSchema, deleteWebhook,
   testWebhookSchema, testWebhook,
 } from "./tools/webhooks.js";
+import { summarizeRunSchema, summarizeRun } from "./tools/aggregations.js";
 import {
   createPromptOptimizationJobSchema, createPromptOptimizationJob,
   getPromptOptimizationJobSchema, getPromptOptimizationJob,
@@ -244,6 +245,13 @@ tool("get-prompt-optimization-job", "Get a prompt optimization job by ID", getPr
 tool("search-prompt-optimization-jobs", "Search prompt optimization jobs in an experiment", searchPromptOptimizationJobsSchema.shape, wrapToolHandler(searchPromptOptimizationJobs));
 tool("cancel-prompt-optimization-job", "Cancel a running prompt optimization job", cancelPromptOptimizationJobSchema.shape, wrapToolHandler(cancelPromptOptimizationJob));
 tool("delete-prompt-optimization-job", "Delete a prompt optimization job", deletePromptOptimizationJobSchema.shape, wrapToolHandler(deletePromptOptimizationJob));
+
+// --- Aggregation tools (round-trip elimination) ---
+currentCategory = "runs";
+
+tool("summarize-run",
+  "Aggregated run view: run info + (optional) metric history + (optional) artifacts list in a single call. Replaces 3-4 round-trips of get-run + get-metric-history (per metric) + list-artifacts.",
+  summarizeRunSchema.shape, wrapToolHandler(summarizeRun));
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";
