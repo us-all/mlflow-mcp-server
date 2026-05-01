@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-05-01
+
+### Added
+- **Model Registry Webhooks** (6 tools): `create-webhook`, `list-webhooks`, `get-webhook`, `update-webhook`, `delete-webhook`, `test-webhook`. REST endpoints under `/api/2.0/mlflow/webhooks/*`. MLflow 3 OSS event-driven integrations.
+- **Prompt Optimization Jobs** (5 tools, MLflow 3 GenAI): `create-prompt-optimization-job`, `get-prompt-optimization-job`, `search-prompt-optimization-jobs`, `cancel-prompt-optimization-job`, `delete-prompt-optimization-job`. REST endpoints under `/api/3.0/mlflow/prompt-optimization/jobs`.
+
+### Changed
+- Total tool count: 66 → 77
+- Differentiation vs official `mlflow[mcp]` (9 tools, traces-only): now covers webhooks + prompt optimization, areas the official MCP does not address.
+
 ## [1.1.3] - 2026-04-27
 
 ### Fixed

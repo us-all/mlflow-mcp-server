@@ -95,6 +95,21 @@ import {
   updateAssessmentSchema, updateAssessment,
   deleteAssessmentSchema, deleteAssessment,
 } from "./tools/assessments.js";
+import {
+  createWebhookSchema, createWebhook,
+  listWebhooksSchema, listWebhooks,
+  getWebhookSchema, getWebhook,
+  updateWebhookSchema, updateWebhook,
+  deleteWebhookSchema, deleteWebhook,
+  testWebhookSchema, testWebhook,
+} from "./tools/webhooks.js";
+import {
+  createPromptOptimizationJobSchema, createPromptOptimizationJob,
+  getPromptOptimizationJobSchema, getPromptOptimizationJob,
+  searchPromptOptimizationJobsSchema, searchPromptOptimizationJobs,
+  cancelPromptOptimizationJobSchema, cancelPromptOptimizationJob,
+  deletePromptOptimizationJobSchema, deletePromptOptimizationJob,
+} from "./tools/prompt-optimization.js";
 
 validateConfig();
 
@@ -189,6 +204,23 @@ server.tool("log-expectation", "Log a ground-truth expectation on a trace", logE
 server.tool("get-assessment", "Get an assessment by trace ID and assessment ID", getAssessmentSchema.shape, wrapToolHandler(getAssessment));
 server.tool("update-assessment", "Update an existing assessment", updateAssessmentSchema.shape, wrapToolHandler(updateAssessment));
 server.tool("delete-assessment", "Delete an assessment from a trace", deleteAssessmentSchema.shape, wrapToolHandler(deleteAssessment));
+
+// --- Webhooks (Model Registry events) ---
+
+server.tool("create-webhook", "Register a webhook for model registry events", createWebhookSchema.shape, wrapToolHandler(createWebhook));
+server.tool("list-webhooks", "List webhooks (optionally filtered by model name)", listWebhooksSchema.shape, wrapToolHandler(listWebhooks));
+server.tool("get-webhook", "Get webhook details by ID", getWebhookSchema.shape, wrapToolHandler(getWebhook));
+server.tool("update-webhook", "Update an existing webhook (events, URL, status, secret)", updateWebhookSchema.shape, wrapToolHandler(updateWebhook));
+server.tool("delete-webhook", "Delete a webhook by ID", deleteWebhookSchema.shape, wrapToolHandler(deleteWebhook));
+server.tool("test-webhook", "Send a test event to a webhook to verify configuration", testWebhookSchema.shape, wrapToolHandler(testWebhook));
+
+// --- Prompt Optimization (MLflow 3 GenAI) ---
+
+server.tool("create-prompt-optimization-job", "Create a prompt optimization job to automatically improve a registered prompt", createPromptOptimizationJobSchema.shape, wrapToolHandler(createPromptOptimizationJob));
+server.tool("get-prompt-optimization-job", "Get a prompt optimization job by ID", getPromptOptimizationJobSchema.shape, wrapToolHandler(getPromptOptimizationJob));
+server.tool("search-prompt-optimization-jobs", "Search prompt optimization jobs in an experiment", searchPromptOptimizationJobsSchema.shape, wrapToolHandler(searchPromptOptimizationJobs));
+server.tool("cancel-prompt-optimization-job", "Cancel a running prompt optimization job", cancelPromptOptimizationJobSchema.shape, wrapToolHandler(cancelPromptOptimizationJob));
+server.tool("delete-prompt-optimization-job", "Delete a prompt optimization job", deletePromptOptimizationJobSchema.shape, wrapToolHandler(deletePromptOptimizationJob));
 
 registerPrompts(server);
 
