@@ -49,7 +49,17 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - **민감정보 마스킹**: 에러 메시지에서 token/password 패턴 `[REDACTED]`
 - **camelCase ↔ snake_case**: 도구 핸들러에서 수동 변환
 
-## 최근 변경사항 (2026-04-27)
+## 최근 변경사항 (2026-05-01)
+
+- **v1.6.0**: `@us-all/mcp-toolkit ^0.1.0`으로 마이그레이션 — `tool-registry.ts`와 `applyExtractFields`를 toolkit에서 import. utils.ts의 inline 구현 제거. 단위 테스트(tool-registry, extract-fields)는 toolkit이 owns. ~170 lines 코드 절감.
+- **v1.5.1**: `pnpm token-stats` 스크립트 + CI TOKEN_BUDGET=12000 가드 추가.
+- **v1.5.0**: `summarize-run` 어그리게이션 도구 — run info + (opt) metric history per key + (opt) artifacts. 3-5 round-trips → 1 call.
+- **v1.4.0**: MCP Resources (`mlflow://` URI scheme) 6개 — run, experiment, experiment-by-name, registered-model, model-version, trace.
+- **v1.3.1**: `extractFields` auto-apply via `wrapToolHandler`. experiments / runs 핵심 read 스키마에 명시적 선언.
+- **v1.3.0**: 카테고리 ENV 토글(`MLFLOW_TOOLS` / `MLFLOW_DISABLE`) 8 카테고리 + `search-tools` 메타툴.
+- **v1.2.0**: Webhooks 6개 + Prompt Optimization 5개 도구 추가 (도구 66→77).
+
+### 이전 변경사항 (2026-04-27)
 
 - v1.1.1 패치: docker 멀티 아키텍처 (linux/amd64 + linux/arm64), vitest 단위 테스트 20개 추가, 문서 3종 (CHANGELOG/SECURITY/CONTRIBUTING)
 - v1.1.0 마이너: 도구 55→66, 프롬프트 신규 4개. **76/76 통과** (스모크 검증)
@@ -77,8 +87,8 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - ~~응답 필드 선택 없음~~ → 해결 (extractFields 파라미터)
 - ~~MLflow v3 LoggedModel 엔티티 미지원~~ → 해결 (logged-models.ts)
 - ~~편의 도구 부재~~ → 해결 (get-best-run, compare-runs, search-runs-by-tags)
-- ~~MCP Prompts/Resources 미사용~~ → Prompts 4개 추가; Resources는 여전히 미사용
-- **CI 자동화 부재**: smoke.mjs를 GitHub Actions로 자동 실행하는 워크플로우 미설정
+- ~~MCP Prompts/Resources 미사용~~ → 해결 (Prompts 4개 + Resources 6개 v1.4.0)
+- ~~CI 자동화 부재~~ → 해결 (token-stats CI 가드 v1.5.1)
 - **인증 경로 미검증**: Bearer 토큰/Basic auth 코드는 있으나 실제 백엔드 검증은 안 됨
 
 ## 개선 로드맵
@@ -90,8 +100,10 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - [x] MCP Prompts로 흔한 워크플로우 템플릿 제공
 - [x] CI: smoke.mjs를 GitHub Actions에서 docker compose 띄워 자동 실행
 - [ ] 인증 테스트: Databricks PAT/Basic auth 경로 검증
-- [ ] MCP Resources: 자주 보는 객체(experiment, run, registered-model)를 리소스 URI로 노출
-- [ ] `extract_fields`를 search-runs / get-run에도 적용
+- [x] MCP Resources: 자주 보는 객체(experiment, run, registered-model)를 리소스 URI로 노출 (v1.4.0)
+- [x] `extract_fields`를 search-runs / get-run에도 적용 (v1.3.1)
+- [x] `summarize-run` 어그리게이션 도구 (v1.5.0)
+- [x] `@us-all/mcp-toolkit` 마이그레이션 (v1.6.0)
 - [x] vitest 단위 테스트 (config, extract-fields, sanitize)
 - [x] CHANGELOG / SECURITY / CONTRIBUTING 문서
 - [x] docker 멀티 아키텍처
