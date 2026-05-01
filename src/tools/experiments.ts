@@ -2,6 +2,8 @@ import { z } from "zod/v4";
 import { mlflowClient } from "../client.js";
 import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
 
+const ef = z.string().optional().describe("Comma-separated dotted paths to project from response (e.g. 'experiments.*.experiment_id,experiments.*.name'). Use `*` as wildcard. Reduces response tokens.");
+
 const tagSchema = z.object({
   key: z.string(),
   value: z.string(),
@@ -32,6 +34,7 @@ export const searchExperimentsSchema = z.object({
   orderBy: z.array(z.string()).optional().describe("Sort fields (e.g. ['name ASC', 'last_update_time DESC'])"),
   pageToken: z.string().optional().describe("Pagination token from previous response"),
   viewType: z.enum(["ACTIVE_ONLY", "DELETED_ONLY", "ALL"]).optional().describe("Filter by lifecycle stage"),
+  extractFields: ef,
 });
 
 export async function searchExperiments(params: z.infer<typeof searchExperimentsSchema>) {
@@ -48,6 +51,7 @@ export async function searchExperiments(params: z.infer<typeof searchExperiments
 
 export const getExperimentSchema = z.object({
   experimentId: z.string().optional().describe("Experiment ID (defaults to MLFLOW_EXPERIMENT_ID)"),
+  extractFields: ef,
 });
 
 export async function getExperiment(params: z.infer<typeof getExperimentSchema>) {

@@ -2,6 +2,8 @@ import { z } from "zod/v4";
 import { mlflowClient } from "../client.js";
 import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
 
+const ef = z.string().optional().describe("Comma-separated dotted paths to project from response (e.g. 'runs.*.info.run_id,runs.*.data.metrics'). Use `*` as wildcard. Reduces response tokens dramatically.");
+
 const tagSchema = z.object({ key: z.string(), value: z.string() });
 const metricSchema = z.object({
   key: z.string(),
@@ -34,6 +36,7 @@ export async function createRun(params: z.infer<typeof createRunSchema>) {
 
 export const getRunSchema = z.object({
   runId: z.string().describe("Run ID"),
+  extractFields: ef,
 });
 
 export async function getRun(params: z.infer<typeof getRunSchema>) {
@@ -49,6 +52,7 @@ export const searchRunsSchema = z.object({
   maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100, max 50000)"),
   orderBy: z.array(z.string()).optional().describe("Sort fields (e.g. ['metrics.rmse ASC'])"),
   pageToken: z.string().optional(),
+  extractFields: ef,
 });
 
 export async function searchRuns(params: z.infer<typeof searchRunsSchema>) {
