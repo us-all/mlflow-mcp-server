@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-01
+
+### Added
+
+- **Token efficiency standard** — cross-repo standard with openmetadata-mcp v1.3.0, datadog-mcp v1.9.0, google-drive-mcp v1.5.0:
+  - `MLFLOW_TOOLS` / `MLFLOW_DISABLE` env vars: 8 categories (`experiments`, `runs`, `registry`, `logged-models`, `traces`, `assessments`, `webhooks`, `prompts`)
+  - `search-tools` meta-tool (always enabled): natural-language tool discovery
+- New unit test: `tests/unit/tool-registry.test.ts` (4 cases)
+
+### Changed
+
+- Total tools: 77 → 78 (+search-tools meta)
+- `src/index.ts` refactored: `tool()` helper with category filtering. `extractFields` was already present on traces (preserved).
+
 ## [1.2.0] - 2026-05-01
 
 ### Added
