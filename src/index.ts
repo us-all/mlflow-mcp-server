@@ -114,6 +114,7 @@ import {
 validateConfig();
 
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
+import { registerResources } from "./resources.js";
 
 const server = new McpServer({
   name: "mlflow",
@@ -252,6 +253,7 @@ tool("search-tools",
   searchToolsSchema.shape, wrapToolHandler(searchTools));
 
 registerPrompts(server);
+registerResources(server);
 
 async function main() {
   const transport = new StdioServerTransport();
