@@ -62,8 +62,24 @@ docker run --rm -i \
 | `MLFLOW_TRACKING_PASSWORD` | No | Basic-auth password |
 | `MLFLOW_EXPERIMENT_ID` | No | Default experiment ID for tools that accept it implicitly |
 | `MLFLOW_ALLOW_WRITE` | No | Set to `true` to enable create/update/delete operations (default: `false`) |
+| `MLFLOW_TOOLS` | No | Allowlist of tool categories (e.g. `experiments,runs`). Categories: `experiments`, `runs`, `registry`, `logged-models`, `traces`, `assessments`, `webhooks`, `prompts`. |
+| `MLFLOW_DISABLE` | No | Denylist of categories. Ignored when `MLFLOW_TOOLS` is set. |
 
-## Tools (66)
+## Token Efficiency
+
+With 78 tools, naive setup loads ~9.2K tokens of tool schema. Category toggles drop further.
+
+**Measured impact** (from `tools/list` JSON length, ~4 chars/token):
+
+| Scenario | Tools loaded | Schema tokens | vs default |
+|----------|--------------|---------------|-----------|
+| default (all categories) | 78 | **9,200** | — |
+| typical (`MLFLOW_TOOLS=experiments,runs,registry,traces`) | 54 | 5,900 | −36% |
+| narrow (`MLFLOW_TOOLS=experiments,runs`) | 27 | **3,200** | **−66%** |
+
+Plus `extractFields` on `search-traces`/`get-trace` (already present) and `search-tools` meta-tool for discovery.
+
+## Tools (78)
 
 ### Experiments (9)
 `create-experiment` `search-experiments` `get-experiment` `get-experiment-by-name` `update-experiment` `delete-experiment` `restore-experiment` `set-experiment-tag` `delete-experiment-tag`
