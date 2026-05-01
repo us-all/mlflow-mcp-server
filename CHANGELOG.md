@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-05-01
+
+### Added
+
+- `pnpm token-stats` script + CI regression guard with `TOKEN_BUDGET=12000`.
+
+## [1.5.0] - 2026-05-01
+
+### Added
+
+- **`summarize-run` aggregation tool** — run info + (opt) metric history per key + (opt) artifacts list in a single call. Replaces 3-5 round-trips.
+
+## [1.4.0] - 2026-05-01
+
+### Added
+
+- **MCP Resources (`mlflow://` URI scheme)** — 6 resource templates: `mlflow://run/{runId}`, `mlflow://experiment/{experimentId}`, `mlflow://experiment-by-name/{name}`, `mlflow://registered-model/{name}`, `mlflow://model-version/{name}/{version}`, `mlflow://trace/{traceId}`.
+
+## [1.3.1] - 2026-05-01
+
+### Added
+
+- **`extractFields` auto-apply** via `wrapToolHandler`. Schema field declared on `experiments` and `runs` core read tools.
+
 ## [1.3.0] - 2026-05-01
 
 ### Added
