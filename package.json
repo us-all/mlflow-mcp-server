@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
   "main": "dist/index.js",
@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "presmoke": "pnpm run build",
     "smoke": "node dev/smoke.mjs",
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "tsc",
+    "pretoken-stats": "pnpm run build",
+    "token-stats": "node scripts/measure-tokens.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
