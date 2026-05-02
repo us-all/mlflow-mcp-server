@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
   "main": "dist/index.js",

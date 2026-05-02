@@ -45,6 +45,10 @@ export async function summarizeRun(params: z.infer<typeof summarizeRunSchema>) {
           const r = await mlflowClient.get<{ metrics?: unknown[] }>("/metrics/get-history", {
             run_id: params.runId,
             metric_key: key,
+            // MLflow 3.x requires max_results — without it the API returns only
+            // next_page_token (no `metrics` field), which silently produces an
+            // empty history. 25000 is the documented per-page maximum.
+            max_results: 25000,
           }).catch(() => null);
           return { key, history: r?.metrics ?? [] };
         }))
