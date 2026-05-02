@@ -105,7 +105,7 @@ import {
   deleteWebhookSchema, deleteWebhook,
   testWebhookSchema, testWebhook,
 } from "./tools/webhooks.js";
-import { summarizeRunSchema, summarizeRun } from "./tools/aggregations.js";
+import { summarizeRunSchema, summarizeRun, summarizeExperimentSchema, summarizeExperiment } from "./tools/aggregations.js";
 import {
   createPromptOptimizationJobSchema, createPromptOptimizationJob,
   getPromptOptimizationJobSchema, getPromptOptimizationJob,
@@ -256,6 +256,10 @@ currentCategory = "runs";
 tool("summarize-run",
   "Aggregated run view: run info + (optional) metric history + (optional) artifacts list in a single call. Replaces 3-4 round-trips of get-run + get-metric-history (per metric) + list-artifacts.",
   summarizeRunSchema.shape, wrapToolHandler(summarizeRun));
+
+tool("summarize-experiment",
+  "Aggregated experiment view: experiment overview + topN runs (sorted by metric or start_time) + metric stats (min/max/mean across topN) in a single call. Replaces 3-5 round-trips of get-experiment + search-runs + get-best-run.",
+  summarizeExperimentSchema.shape, wrapToolHandler(summarizeExperiment));
 
 // --- Meta tools (always enabled) ---
 currentCategory = "meta";

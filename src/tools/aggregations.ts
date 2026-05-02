@@ -70,3 +70,147 @@ export async function summarizeRun(params: z.infer<typeof summarizeRunSchema>) {
     },
   };
 }
+
+/**
+ * `summarize-experiment` — one call returns experiment overview + top runs +
+ * metric stats. Replaces 3-5 sequential calls (get-experiment → search-runs →
+ * get-best-run × N → metric history) when an LLM is exploring an experiment.
+ */
+
+export const summarizeExperimentSchema = z.object({
+  experimentId: z.string().describe("Experiment ID"),
+  topN: z.coerce.number().int().min(1).max(20).optional().describe("Number of top runs to return (default 5, max 20)"),
+  metric: z.string().optional().describe("Metric key to sort topN by; if omitted, sorts by start_time DESC"),
+  ascending: z.string().optional().describe("'true' or 'false' (default 'false'). Only meaningful when metric is set."),
+  extractFields: ef,
+});
+
+interface ExperimentResponse {
+  experiment?: {
+    experiment_id?: string;
+    name?: string;
+    lifecycle_stage?: string;
+    artifact_location?: string;
+    tags?: Array<{ key: string; value: string }>;
+  };
+}
+
+interface SearchRunsAggResponse {
+  runs?: Array<{
+    info?: {
+      run_id?: string;
+      status?: string;
+      start_time?: number;
+      end_time?: number;
+    };
+    data?: {
+      metrics?: Array<{ key: string; value: number; step?: number; timestamp?: number }>;
+      params?: Array<{ key: string; value: string }>;
+      tags?: Array<{ key: string; value: string }>;
+    };
+  }>;
+  next_page_token?: string;
+}
+
+export async function summarizeExperiment(params: z.infer<typeof summarizeExperimentSchema>) {
+  const topN = params.topN ?? 5;
+  const ascending = params.ascending === "true";
+  const orderBy = params.metric
+    ? [`metrics.${params.metric} ${ascending ? "ASC" : "DESC"}`]
+    : ["attributes.start_time DESC"];
+
+  const caveats: string[] = [];
+
+  const [expResult, runsResult] = await Promise.allSettled([
+    mlflowClient.get<ExperimentResponse>("/experiments/get", { experiment_id: params.experimentId }),
+    mlflowClient.post<SearchRunsAggResponse>("/runs/search", {
+      experiment_ids: [params.experimentId],
+      max_results: topN,
+      order_by: orderBy,
+    }),
+  ]);
+
+  let experiment: {
+    experimentId?: string;
+    name?: string;
+    lifecycleStage?: string;
+    artifactLocation?: string;
+    tags?: Array<{ key: string; value: string }>;
+  } | null = null;
+  if (expResult.status === "fulfilled") {
+    const e = expResult.value.experiment;
+    experiment = {
+      experimentId: e?.experiment_id,
+      name: e?.name,
+      lifecycleStage: e?.lifecycle_stage,
+      artifactLocation: e?.artifact_location,
+      tags: e?.tags,
+    };
+  } else {
+    caveats.push(`get-experiment failed: ${(expResult.reason as Error)?.message ?? "unknown error"}`);
+  }
+
+  let topRuns: Array<{
+    run_id?: string;
+    status?: string;
+    start_time?: number;
+    end_time?: number;
+    metrics?: Array<{ key: string; value: number; step?: number; timestamp?: number }>;
+    params?: Array<{ key: string; value: string }>;
+    tags?: Array<{ key: string; value: string }>;
+  }> = [];
+  let totalRunsApprox: number | null = null;
+  if (runsResult.status === "fulfilled") {
+    const runs = runsResult.value.runs ?? [];
+    topRuns = runs.map((r) => ({
+      run_id: r.info?.run_id,
+      status: r.info?.status,
+      start_time: r.info?.start_time,
+      end_time: r.info?.end_time,
+      metrics: r.data?.metrics,
+      params: r.data?.params,
+      tags: r.data?.tags,
+    }));
+    // If a next_page_token exists, more runs are available than topN — can't
+    // determine total cheaply without paging.
+    totalRunsApprox = runsResult.value.next_page_token ? null : topRuns.length;
+  } else {
+    caveats.push(`search-runs failed: ${(runsResult.reason as Error)?.message ?? "unknown error"}`);
+  }
+
+  // Compute metric stats only when a metric is provided. Skipped entirely
+  // otherwise — no cheap way to pick a "default" metric across heterogeneous
+  // runs, and computing on every metric would explode the response.
+  let metricStats: { metric: string; min: number; max: number; mean: number; count: number } | null = null;
+  if (params.metric) {
+    const values: number[] = [];
+    for (const r of topRuns) {
+      const m = r.metrics?.find((x) => x.key === params.metric);
+      if (m && typeof m.value === "number") values.push(m.value);
+    }
+    if (values.length > 0) {
+      const sum = values.reduce((acc, v) => acc + v, 0);
+      metricStats = {
+        metric: params.metric,
+        min: Math.min(...values),
+        max: Math.max(...values),
+        mean: sum / values.length,
+        count: values.length,
+      };
+    } else {
+      caveats.push(`metric '${params.metric}' not found on any of the topN runs`);
+    }
+  }
+
+  if (totalRunsApprox === null && runsResult.status === "fulfilled") {
+    caveats.push(`More than ${topN} runs exist in this experiment; totalRunsApprox is unavailable without paging`);
+  }
+
+  return {
+    experiment,
+    topRuns,
+    metricStats,
+    totalRunsApprox,
+    caveats,
+  };
+}
