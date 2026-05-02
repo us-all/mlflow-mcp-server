@@ -49,9 +49,10 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 - **민감정보 마스킹**: 에러 메시지에서 token/password 패턴 `[REDACTED]`
 - **camelCase ↔ snake_case**: 도구 핸들러에서 수동 변환
 
-## 최근 변경사항 (2026-05-01)
+## 최근 변경사항
 
-- **v1.6.0**: `@us-all/mcp-toolkit ^0.1.0`으로 마이그레이션 — `tool-registry.ts`와 `applyExtractFields`를 toolkit에서 import. utils.ts의 inline 구현 제거. 단위 테스트(tool-registry, extract-fields)는 toolkit이 owns. ~170 lines 코드 절감.
+- **v1.6.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` 본문 제거, `createWrapToolHandler` factory로 위임. `redactionPatterns: [/basic\s+\S+/i]` + `errorExtractors`(WriteBlockedError → passthrough, MlflowError → structured `{status, body}`)만 명시. utils.ts 87→56 lines.
+- **v1.6.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0`으로 마이그레이션 — `tool-registry.ts`와 `applyExtractFields`를 toolkit에서 import. utils.ts의 inline 구현 제거. 단위 테스트(tool-registry, extract-fields)는 toolkit이 owns. ~170 lines 코드 절감.
 - **v1.5.1**: `pnpm token-stats` 스크립트 + CI TOKEN_BUDGET=12000 가드 추가.
 - **v1.5.0**: `summarize-run` 어그리게이션 도구 — run info + (opt) metric history per key + (opt) artifacts. 3-5 round-trips → 1 call.
 - **v1.4.0**: MCP Resources (`mlflow://` URI scheme) 6개 — run, experiment, experiment-by-name, registered-model, model-version, trace.
