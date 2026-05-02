@@ -6,13 +6,12 @@ import { applyExtractFields, assertWriteAllowed, resolveExperimentId } from "./u
 
 export const searchTracesSchema = z.object({
   experimentIds: z.array(z.string()).optional().describe("Experiment IDs (defaults to MLFLOW_EXPERIMENT_ID)"),
-  filter: z.string().optional().describe("Filter expression (e.g. \"tags.user = 'alice'\")"),
+  filter: z.string().optional().describe("Filter expression, e.g. \"tags.user = 'alice'\""),
   maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
   orderBy: z.array(z.string()).optional(),
   pageToken: z.string().optional(),
   extractFields: z.string().optional().describe(
-    "Comma-separated dotted paths to keep in the response (supports `*` wildcard). " +
-    "E.g. \"traces.*.trace_id,traces.*.trace_location\". Drops unmatched fields to save tokens.",
+    "Comma-separated dotted paths with `*` wildcard, e.g. \"traces.*.trace_id\".",
   ),
 });
 
@@ -30,7 +29,13 @@ export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
     order_by: params.orderBy,
     page_token: params.pageToken,
   });
-  return applyExtractFields(result, params.extractFields);
+  if (params.extractFields) return applyExtractFields(result, params.extractFields);
+  // Default projection: keep core trace identifiers/timing/status. Covers both
+  // flat (v3) and nested `trace_info.*` shapes; missing paths are silently ignored.
+  return applyExtractFields(
+    result,
+    "traces.*.trace_id,traces.*.experiment_id,traces.*.timestamp_ms,traces.*.execution_time_ms,traces.*.status,traces.*.trace_location,traces.*.request_time,traces.*.execution_duration,traces.*.state,traces.*.trace_info.trace_id,traces.*.trace_info.experiment_id,traces.*.trace_info.timestamp_ms,traces.*.trace_info.execution_time_ms,traces.*.trace_info.status,next_page_token",
+  );
 }
 
 // --- get-trace ---
@@ -38,8 +43,7 @@ export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
 export const getTraceSchema = z.object({
   traceId: z.string().describe("Trace ID"),
   extractFields: z.string().optional().describe(
-    "Comma-separated dotted paths to keep (supports `*`). " +
-    "E.g. \"trace.info.trace_id,trace.data.spans.*.name\".",
+    "Comma-separated dotted paths with `*` wildcard, e.g. \"trace.data.spans.*.name\".",
   ),
 });
 

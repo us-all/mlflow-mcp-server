@@ -3,8 +3,8 @@ import { mlflowClient } from "../client.js";
 import { assertWriteAllowed } from "./utils.js";
 
 const assessmentSourceSchema = z.object({
-  source_type: z.enum(["HUMAN", "LLM_JUDGE", "CODE", "AI_JUDGE"]).describe("Source type for the assessment"),
-  source_id: z.string().optional().describe("Identifier of the source (e.g. user email, judge name)"),
+  source_type: z.enum(["HUMAN", "LLM_JUDGE", "CODE", "AI_JUDGE"]).describe("Source type"),
+  source_id: z.string().optional().describe("Source identifier (e.g. user email)"),
 });
 
 const traceAssessmentsBase = (traceId: string) =>

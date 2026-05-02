@@ -1,8 +1,8 @@
 import { z } from "zod/v4";
 import { mlflowClient } from "../client.js";
-import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
+import { applyExtractFields, assertWriteAllowed, resolveExperimentId } from "./utils.js";
 
-const ef = z.string().optional().describe("Comma-separated dotted paths to project from response (e.g. 'runs.*.info.run_id,runs.*.data.metrics'). Use `*` as wildcard. Reduces response tokens dramatically.");
+const ef = z.string().optional().describe("Comma-separated dotted paths with `*` wildcard (e.g. 'runs.*.info.run_id'). Reduces response tokens.");
 
 const tagSchema = z.object({ key: z.string(), value: z.string() });
 const metricSchema = z.object({
@@ -40,17 +40,22 @@ export const getRunSchema = z.object({
 });
 
 export async function getRun(params: z.infer<typeof getRunSchema>) {
-  return mlflowClient.get("/runs/get", { run_id: params.runId });
+  const data = await mlflowClient.get("/runs/get", { run_id: params.runId });
+  if (params.extractFields) return data;
+  return applyExtractFields(
+    data,
+    "run.info.run_id,run.info.experiment_id,run.info.status,run.info.start_time,run.info.end_time,run.data.metrics,run.data.params,run.data.tags",
+  );
 }
 
 // --- search-runs ---
 
 export const searchRunsSchema = z.object({
-  experimentIds: z.array(z.string()).optional().describe("Experiment IDs to search (defaults to MLFLOW_EXPERIMENT_ID if set)"),
-  filter: z.string().optional().describe("Filter expression (e.g. \"metrics.rmse < 1 and params.lr = '0.1'\")"),
+  experimentIds: z.array(z.string()).optional().describe("Experiment IDs (defaults to MLFLOW_EXPERIMENT_ID)"),
+  filter: z.string().optional().describe("Filter expression, e.g. \"metrics.rmse < 1\""),
   runViewType: z.enum(["ACTIVE_ONLY", "DELETED_ONLY", "ALL"]).optional(),
-  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100, max 50000)"),
-  orderBy: z.array(z.string()).optional().describe("Sort fields (e.g. ['metrics.rmse ASC'])"),
+  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
+  orderBy: z.array(z.string()).optional().describe("Sort fields, e.g. ['metrics.rmse ASC']"),
   pageToken: z.string().optional(),
   extractFields: ef,
 });
@@ -258,8 +263,8 @@ export async function listArtifacts(params: z.infer<typeof listArtifactsSchema>)
 export const getBestRunSchema = z.object({
   experimentId: z.string().optional().describe("Experiment ID (defaults to MLFLOW_EXPERIMENT_ID)"),
   metric: z.string().describe("Metric key to optimize on (e.g. 'accuracy', 'loss')"),
-  ascending: z.boolean().optional().default(false).describe("True to minimize (e.g. loss); false (default) to maximize"),
-  filter: z.string().optional().describe("Additional filter expression on top of the metric ordering"),
+  ascending: z.boolean().optional().default(false).describe("True to minimize (e.g. loss); default maximizes"),
+  filter: z.string().optional().describe("Additional filter on top of metric ordering"),
 });
 
 interface SearchRunsResponse {

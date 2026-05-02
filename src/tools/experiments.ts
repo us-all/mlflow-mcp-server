@@ -1,8 +1,8 @@
 import { z } from "zod/v4";
 import { mlflowClient } from "../client.js";
-import { assertWriteAllowed, resolveExperimentId } from "./utils.js";
+import { applyExtractFields, assertWriteAllowed, resolveExperimentId } from "./utils.js";
 
-const ef = z.string().optional().describe("Comma-separated dotted paths to project from response (e.g. 'experiments.*.experiment_id,experiments.*.name'). Use `*` as wildcard. Reduces response tokens.");
+const ef = z.string().optional().describe("Comma-separated dotted paths with `*` wildcard (e.g. 'experiments.*.experiment_id'). Reduces response tokens.");
 
 const tagSchema = z.object({
   key: z.string(),
@@ -29,11 +29,11 @@ export async function createExperiment(params: z.infer<typeof createExperimentSc
 // --- search-experiments ---
 
 export const searchExperimentsSchema = z.object({
-  filter: z.string().optional().describe("Filter expression (e.g. \"name LIKE '%demo%'\")"),
-  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100, max 50000)"),
-  orderBy: z.array(z.string()).optional().describe("Sort fields (e.g. ['name ASC', 'last_update_time DESC'])"),
-  pageToken: z.string().optional().describe("Pagination token from previous response"),
-  viewType: z.enum(["ACTIVE_ONLY", "DELETED_ONLY", "ALL"]).optional().describe("Filter by lifecycle stage"),
+  filter: z.string().optional().describe("Filter expression, e.g. \"name LIKE '%demo%'\""),
+  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
+  orderBy: z.array(z.string()).optional().describe("Sort fields, e.g. ['name ASC']"),
+  pageToken: z.string().optional().describe("Pagination token"),
+  viewType: z.enum(["ACTIVE_ONLY", "DELETED_ONLY", "ALL"]).optional().describe("Lifecycle stage filter"),
   extractFields: ef,
 });
 
@@ -55,9 +55,14 @@ export const getExperimentSchema = z.object({
 });
 
 export async function getExperiment(params: z.infer<typeof getExperimentSchema>) {
-  return mlflowClient.get("/experiments/get", {
+  const data = await mlflowClient.get("/experiments/get", {
     experiment_id: resolveExperimentId(params.experimentId),
   });
+  if (params.extractFields) return data;
+  return applyExtractFields(
+    data,
+    "experiment.experiment_id,experiment.name,experiment.lifecycle_stage,experiment.creation_time",
+  );
 }
 
 // --- get-experiment-by-name ---
