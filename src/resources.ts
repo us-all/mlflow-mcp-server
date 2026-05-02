@@ -5,12 +5,15 @@ import { mlflowClient } from "./client.js";
  * MCP Resources for hot MLflow entities.
  *
  * URI scheme: `mlflow://`
- *   - mlflow://run/{runId}                         — run details (info + metrics + params + tags)
- *   - mlflow://experiment/{experimentId}           — experiment details
- *   - mlflow://experiment-by-name/{name}           — experiment by name
- *   - mlflow://registered-model/{name}             — registered model details + versions
- *   - mlflow://model-version/{name}/{version}      — specific model version
- *   - mlflow://trace/{traceId}                     — GenAI trace
+ *   - mlflow://run/{runId}                              — run details (info + metrics + params + tags)
+ *   - mlflow://run/{runId}/artifacts                    — artifacts under a run's artifact root
+ *   - mlflow://experiment/{experimentId}                — experiment details
+ *   - mlflow://experiment-by-name/{name}                — experiment by name
+ *   - mlflow://experiment/{experimentId}/runs           — recent runs in experiment (last 10 by start_time desc)
+ *   - mlflow://registered-model/{name}                  — registered model details + latest versions
+ *   - mlflow://registered-model/{name}/versions         — all versions of a registered model
+ *   - mlflow://model-version/{name}/{version}           — specific model version
+ *   - mlflow://trace/{traceId}                          — GenAI trace
  */
 
 function asJson(uri: string, data: unknown) {
@@ -107,6 +110,56 @@ export function registerResources(server: McpServer): void {
     },
     async (uri, vars) => {
       const data = await mlflowClient.get(`/api/3.0/mlflow/traces/${encodeURIComponent(String(vars.traceId))}`);
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  server.registerResource(
+    "run-artifacts",
+    new ResourceTemplate("mlflow://run/{runId}/artifacts", { list: undefined }),
+    {
+      title: "MLflow Run Artifacts",
+      description: "List artifacts under a run's artifact root",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const data = await mlflowClient.get("/artifacts/list", { run_id: String(vars.runId) });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  server.registerResource(
+    "experiment-runs",
+    new ResourceTemplate("mlflow://experiment/{experimentId}/runs", { list: undefined }),
+    {
+      title: "MLflow Experiment Runs",
+      description: "Recent runs in experiment (last 10 by start_time desc)",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const data = await mlflowClient.post("/runs/search", {
+        experiment_ids: [String(vars.experimentId)],
+        max_results: 10,
+        order_by: ["attributes.start_time DESC"],
+      });
+      return asJson(uri.toString(), data);
+    },
+  );
+
+  server.registerResource(
+    "registered-model-versions",
+    new ResourceTemplate("mlflow://registered-model/{name}/versions", { list: undefined }),
+    {
+      title: "MLflow Registered Model Versions",
+      description: "All versions of a registered model",
+      mimeType: "application/json",
+    },
+    async (uri, vars) => {
+      const name = decodeURIComponent(String(vars.name));
+      const data = await mlflowClient.get("/model-versions/search", {
+        filter: `name='${name.replace(/'/g, "\\'")}'`,
+        max_results: 200,
+      });
       return asJson(uri.toString(), data);
     },
   );

@@ -113,3 +113,32 @@ export async function deleteTraceTag(params: z.infer<typeof deleteTraceTagSchema
     { key: params.key },
   );
 }
+
+// --- list-trace-attachments (MLflow 3.9+) ---
+//
+// Read-only. The endpoint and response shape are not formally documented in the
+// public MLflow REST reference at the time of writing — we pass through whatever
+// the server returns. Callers will get a 404 from older MLflow versions.
+
+export const listTraceAttachmentsSchema = z.object({
+  traceId: z.string().describe("Trace ID"),
+});
+
+export async function listTraceAttachments(params: z.infer<typeof listTraceAttachmentsSchema>) {
+  return mlflowClient.get(
+    `/api/3.0/mlflow/traces/${encodeURIComponent(params.traceId)}/attachments`,
+  );
+}
+
+// --- get-trace-attachment (MLflow 3.9+) ---
+
+export const getTraceAttachmentSchema = z.object({
+  traceId: z.string().describe("Trace ID"),
+  attachmentId: z.string().describe("Attachment ID"),
+});
+
+export async function getTraceAttachment(params: z.infer<typeof getTraceAttachmentSchema>) {
+  return mlflowClient.get(
+    `/api/3.0/mlflow/traces/${encodeURIComponent(params.traceId)}/attachments/${encodeURIComponent(params.attachmentId)}`,
+  );
+}
