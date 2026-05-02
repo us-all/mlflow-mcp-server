@@ -1,5 +1,24 @@
 import { z } from "zod/v4";
+import { applyExtractFields } from "@us-all/mcp-toolkit";
 import { mlflowClient } from "../client.js";
+
+// Default projection for summarize-experiment topRuns: drop per-metric
+// step+timestamp noise (these belong on get-metric-history, not on a
+// snapshot view). params/tags pass through (already minimal {key,value}).
+const SUMMARIZE_EXPERIMENT_DEFAULT_FIELDS = [
+  "experiment",
+  "topRuns.*.run_id",
+  "topRuns.*.status",
+  "topRuns.*.start_time",
+  "topRuns.*.end_time",
+  "topRuns.*.metrics.*.key",
+  "topRuns.*.metrics.*.value",
+  "topRuns.*.params",
+  "topRuns.*.tags",
+  "metricStats",
+  "totalRunsApprox",
+  "caveats",
+].join(",");
 
 /**
  * Aggregation tools — fetch run + metrics history + artifacts in a single call.
@@ -210,11 +229,15 @@ export async function summarizeExperiment(params: z.infer<typeof summarizeExperi
     caveats.push(`More than ${topN} runs exist in this experiment; totalRunsApprox is unavailable without paging`);
   }
 
-  return {
+  const result = {
     experiment,
     topRuns,
     metricStats,
     totalRunsApprox,
     caveats,
   };
+  // If caller supplied extractFields, return raw — wrapToolHandler projects.
+  // Otherwise apply default projection to drop metric step+timestamp noise.
+  if (params.extractFields) return result;
+  return applyExtractFields(result, SUMMARIZE_EXPERIMENT_DEFAULT_FIELDS);
 }
