@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.8.5** (2026-05-03): `@us-all/mcp-toolkit ^1.1.0` 채택 + `aggregate()` 헬퍼로 `summarize-experiment` 마이그레이션. caveats 라벨 텍스트 변경 (`get-experiment failed:` → `getExperiment failed:`, `search-runs failed:` → `searchRuns failed:`). `summarize-run`은 `Promise.all` + per-fetcher `.catch()` 패턴이라 마이그레이션 대상 외 — 그대로 유지.
 - **v1.8.4** (2026-05-03): `@us-all/mcp-toolkit ^1.0.0` 핀 업데이트. toolkit API freeze (semver 1.x 보장 시작) — 코드 변경 0줄, 20/20 테스트 통과.
 - **v1.8.3** (2026-05-03): Wave 6 — `summarize-run`의 metricHistory 각 포인트에서 중복 `key` 필드 제거(4k-point 기준 ~100KB 절감). `summary.artifactsIncluded`가 fetch 실패 시(`{error:...}`)에도 truthy였던 문제 수정 — 실제 fetch 성공 여부 반영.
 - **v1.8.2** (2026-05-03): `summarize-experiment`의 topRuns metrics 항목에서 step/timestamp default drop (key/value만). caller-supplied extractFields 우선.

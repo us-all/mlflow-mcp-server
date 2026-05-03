@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
   "main": "dist/index.js",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@us-all/mcp-toolkit": "^1.0.0",
+    "@us-all/mcp-toolkit": "^1.1.0",
     "dotenv": "^17.4.2",
     "zod": "^4.4.2"
   },

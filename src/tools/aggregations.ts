@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { applyExtractFields } from "@us-all/mcp-toolkit";
+import { aggregate, applyExtractFields } from "@us-all/mcp-toolkit";
 import { mlflowClient } from "../client.js";
 
 // Default projection for summarize-experiment topRuns: drop per-metric
@@ -150,62 +150,48 @@ export async function summarizeExperiment(params: z.infer<typeof summarizeExperi
 
   const caveats: string[] = [];
 
-  const [expResult, runsResult] = await Promise.allSettled([
-    mlflowClient.get<ExperimentResponse>("/experiments/get", { experiment_id: params.experimentId }),
-    mlflowClient.post<SearchRunsAggResponse>("/runs/search", {
-      experiment_ids: [params.experimentId],
-      max_results: topN,
-      order_by: orderBy,
-    }),
-  ]);
+  const { getExperiment, searchRuns } = await aggregate(
+    {
+      getExperiment: () =>
+        mlflowClient.get<ExperimentResponse>("/experiments/get", { experiment_id: params.experimentId }),
+      searchRuns: () =>
+        mlflowClient.post<SearchRunsAggResponse>("/runs/search", {
+          experiment_ids: [params.experimentId],
+          max_results: topN,
+          order_by: orderBy,
+        }),
+    },
+    caveats,
+  );
 
-  let experiment: {
-    experimentId?: string;
-    name?: string;
-    lifecycleStage?: string;
-    artifactLocation?: string;
-    tags?: Array<{ key: string; value: string }>;
-  } | null = null;
-  if (expResult.status === "fulfilled") {
-    const e = expResult.value.experiment;
-    experiment = {
-      experimentId: e?.experiment_id,
-      name: e?.name,
-      lifecycleStage: e?.lifecycle_stage,
-      artifactLocation: e?.artifact_location,
-      tags: e?.tags,
-    };
-  } else {
-    caveats.push(`get-experiment failed: ${(expResult.reason as Error)?.message ?? "unknown error"}`);
-  }
+  const e = getExperiment?.experiment;
+  const experiment = e
+    ? {
+        experimentId: e.experiment_id,
+        name: e.name,
+        lifecycleStage: e.lifecycle_stage,
+        artifactLocation: e.artifact_location,
+        tags: e.tags,
+      }
+    : null;
 
-  let topRuns: Array<{
-    run_id?: string;
-    status?: string;
-    start_time?: number;
-    end_time?: number;
-    metrics?: Array<{ key: string; value: number; step?: number; timestamp?: number }>;
-    params?: Array<{ key: string; value: string }>;
-    tags?: Array<{ key: string; value: string }>;
-  }> = [];
-  let totalRunsApprox: number | null = null;
-  if (runsResult.status === "fulfilled") {
-    const runs = runsResult.value.runs ?? [];
-    topRuns = runs.map((r) => ({
-      run_id: r.info?.run_id,
-      status: r.info?.status,
-      start_time: r.info?.start_time,
-      end_time: r.info?.end_time,
-      metrics: r.data?.metrics,
-      params: r.data?.params,
-      tags: r.data?.tags,
-    }));
-    // If a next_page_token exists, more runs are available than topN — can't
-    // determine total cheaply without paging.
-    totalRunsApprox = runsResult.value.next_page_token ? null : topRuns.length;
-  } else {
-    caveats.push(`search-runs failed: ${(runsResult.reason as Error)?.message ?? "unknown error"}`);
-  }
+  const runs = searchRuns?.runs ?? [];
+  const topRuns = runs.map((r) => ({
+    run_id: r.info?.run_id,
+    status: r.info?.status,
+    start_time: r.info?.start_time,
+    end_time: r.info?.end_time,
+    metrics: r.data?.metrics,
+    params: r.data?.params,
+    tags: r.data?.tags,
+  }));
+  // If a next_page_token exists, more runs are available than topN — can't
+  // determine total cheaply without paging.
+  const totalRunsApprox: number | null = searchRuns
+    ? searchRuns.next_page_token
+      ? null
+      : topRuns.length
+    : null;
 
   // Compute metric stats only when a metric is provided. Skipped entirely
   // otherwise — no cheap way to pick a "default" metric across heterogeneous
@@ -231,7 +217,7 @@ export async function summarizeExperiment(params: z.infer<typeof summarizeExperi
     }
   }
 
-  if (totalRunsApprox === null && runsResult.status === "fulfilled") {
+  if (totalRunsApprox === null && searchRuns) {
     caveats.push(`More than ${topN} runs exist in this experiment; totalRunsApprox is unavailable without paging`);
   }
 
