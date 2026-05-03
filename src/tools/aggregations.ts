@@ -61,7 +61,7 @@ export async function summarizeRun(params: z.infer<typeof summarizeRunSchema>) {
   const [history, artifacts] = await Promise.all([
     metricKeysToFetch.length > 0
       ? Promise.all(metricKeysToFetch.map(async (key) => {
-          const r = await mlflowClient.get<{ metrics?: unknown[] }>("/metrics/get-history", {
+          const r = await mlflowClient.get<{ metrics?: Array<Record<string, unknown>> }>("/metrics/get-history", {
             run_id: params.runId,
             metric_key: key,
             // MLflow 3.x requires max_results — without it the API returns only
@@ -69,7 +69,10 @@ export async function summarizeRun(params: z.infer<typeof summarizeRunSchema>) {
             // empty history. 25000 is the documented per-page maximum.
             max_results: 25000,
           }).catch(() => null);
-          return { key, history: r?.metrics ?? [] };
+          // Drop redundant `key` from each point — it's already on the wrapper.
+          // For a 4k-point series this trims ~100KB of noise.
+          const history = (r?.metrics ?? []).map(({ key: _k, ...rest }) => rest);
+          return { key, history };
         }))
       : Promise.resolve(null),
     params.includeArtifacts
@@ -89,7 +92,10 @@ export async function summarizeRun(params: z.infer<typeof summarizeRunSchema>) {
       metricsCount: run?.data?.metrics?.length ?? 0,
       tagsCount: run?.data?.tags?.length ?? 0,
       historyIncluded: !!history,
-      artifactsIncluded: !!artifacts,
+      // `artifacts` may be `{ error: "..." }` when the MLflow tracking server
+      // can't list (e.g. GCS-backed without proxy creds). Reflect actual fetch
+      // success, not just whether the include flag was set.
+      artifactsIncluded: !!artifacts && !(artifacts as { error?: unknown }).error,
     },
   };
 }
