@@ -51,6 +51,12 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.8.3** (2026-05-03): Wave 6 — `summarize-run`의 metricHistory 각 포인트에서 중복 `key` 필드 제거(4k-point 기준 ~100KB 절감). `summary.artifactsIncluded`가 fetch 실패 시(`{error:...}`)에도 truthy였던 문제 수정 — 실제 fetch 성공 여부 반영.
+- **v1.8.2** (2026-05-03): `summarize-experiment`의 topRuns metrics 항목에서 step/timestamp default drop (key/value만). caller-supplied extractFields 우선.
+- **v1.8.1** (2026-05-02): `summarize-run` metric history가 MLflow 3.x에서 비어있던 문제 — `/metrics/get-history`가 `max_results` 없이 호출되면 next_page_token만 반환. 25000(문서상 최대) 명시.
+- **v1.8.0** (2026-05-02): `summarize-experiment` 어그리게이션 — experiment + topN runs (metric/start_time 정렬) + metric stats(min/max/mean) 1 call. 3-5 round-trip 대체.
+- **v1.7.0** (2026-05-02): Wave 3 Resources 확장 — `mlflow://run/{runId}/artifacts`, `mlflow://experiment/{expId}/runs`, `mlflow://registered-model/{name}/versions` 추가. 또한 trace attachment 도구 2개(`list-trace-attachments`, `get-trace-attachment`, MLflow 3.9+).
+- **v1.6.2** (2026-05-02): Wave 1 — describe trim 13, 의존성 bumps, fat-read 3개에 default extractFields.
 - **v1.6.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` 본문 제거, `createWrapToolHandler` factory로 위임. `redactionPatterns: [/basic\s+\S+/i]` + `errorExtractors`(WriteBlockedError → passthrough, MlflowError → structured `{status, body}`)만 명시. utils.ts 87→56 lines.
 - **v1.6.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0`으로 마이그레이션 — `tool-registry.ts`와 `applyExtractFields`를 toolkit에서 import. utils.ts의 inline 구현 제거. 단위 테스트(tool-registry, extract-fields)는 toolkit이 owns. ~170 lines 코드 절감.
 - **v1.5.1**: `pnpm token-stats` 스크립트 + CI TOKEN_BUDGET=12000 가드 추가.
