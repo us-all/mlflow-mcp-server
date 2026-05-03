@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.8.4** (2026-05-03): `@us-all/mcp-toolkit ^1.0.0` 핀 업데이트. toolkit API freeze (semver 1.x 보장 시작) — 코드 변경 0줄, 20/20 테스트 통과.
 - **v1.8.3** (2026-05-03): Wave 6 — `summarize-run`의 metricHistory 각 포인트에서 중복 `key` 필드 제거(4k-point 기준 ~100KB 절감). `summary.artifactsIncluded`가 fetch 실패 시(`{error:...}`)에도 truthy였던 문제 수정 — 실제 fetch 성공 여부 반영.
 - **v1.8.2** (2026-05-03): `summarize-experiment`의 topRuns metrics 항목에서 step/timestamp default drop (key/value만). caller-supplied extractFields 우선.
 - **v1.8.1** (2026-05-02): `summarize-run` metric history가 MLflow 3.x에서 비어있던 문제 — `/metrics/get-history`가 `max_results` 없이 호출되면 next_page_token만 반환. 25000(문서상 최대) 명시.
