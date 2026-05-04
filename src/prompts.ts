@@ -115,6 +115,50 @@ export function registerPrompts(server: McpServer): void {
   );
 
   server.registerPrompt(
+    "analyze-failed-traces",
+    {
+      title: "Analyze failure patterns + trend across windows",
+      description: "Higher-level analysis than debug-failed-traces: failure rate trend vs prior window, top patterns by impact, where to focus. Use this when you want 'is it getting worse?' not 'what broke this one?'",
+      argsSchema: {
+        experimentId: z.string().describe("Experiment ID to inspect"),
+        windowMinutes: z.string().optional().describe("Current window size in minutes (default: 60)"),
+        comparisonWindowMinutes: z.string().optional().describe("Prior window size for trend comparison (default: same as windowMinutes)"),
+        topN: z.string().optional().describe("How many failure patterns to surface (default: 5)"),
+      },
+    },
+    ({ experimentId, windowMinutes, comparisonWindowMinutes, topN }) => {
+      const cur = windowMinutes ?? "60";
+      const prior = comparisonWindowMinutes ?? cur;
+      const n = topN ?? "5";
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: [
+              `Analyze the failure pattern + trend in experiment ${experimentId}: current ${cur} minutes vs prior ${prior} minutes.`,
+              "",
+              "Steps:",
+              `1. Compute timestamps: t0 = now − ${cur} min (current window start), t1 = t0 − ${prior} min (prior window start).`,
+              `2. Call \`search-traces\` for the current window: experimentIds=[${JSON.stringify(experimentId)}], filter on status='ERROR' and timestamp_ms >= t0. Use \`extractFields='traces.*.info.trace_id,traces.*.info.execution_duration,traces.*.data.spans.*.name,traces.*.data.spans.*.status'\` to keep payload small.`,
+              "3. Call `search-traces` again for the prior window: same filter, t1 <= timestamp_ms < t0.",
+              `4. Compute total failure counts (curFails, priorFails) and the delta (curFails - priorFails) and ratio.`,
+              `5. Cluster failures by error pattern (failing span name + status code). Surface top ${n} patterns by current-window count.`,
+              "6. For each top pattern report: count this window, count prior window, delta, one representative trace_id, p50/p95 execution duration.",
+              "7. Surface patterns that are entirely new in the current window (count_prior == 0) — these are net-new regressions.",
+              "8. Final summary in markdown:",
+              "   - **Trend**: failure rate up/down by X% with absolute counts.",
+              "   - **Top movers**: 1-line per pattern with delta arrow.",
+              "   - **New regressions**: patterns appearing only in current window.",
+              "   - **Recommendation**: which 1-2 patterns to investigate first (highest impact = highest count × biggest delta). Suggest using `debug-failed-traces` next on those.",
+            ].join("\n"),
+          },
+        }],
+      };
+    },
+  );
+
+  server.registerPrompt(
     "annotate-trace-quality",
     {
       title: "Annotate trace quality with feedback",
