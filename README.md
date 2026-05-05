@@ -16,6 +16,8 @@
 - **MCP Prompts** (4) — `debug-failed-traces`, `promote-best-run`, `compare-top-runs`, `annotate-trace-quality`. Workflow templates the model invokes directly.
 - **MCP Resources** (6) — `mlflow://run/{runId}`, `mlflow://experiment/{expId}`, `mlflow://run/{runId}/artifacts`, `mlflow://experiment/{expId}/runs`, `mlflow://registered-model/{name}/versions`, `mlflow://trace/{traceId}`.
 - **Token-efficient by design** — `extractFields` projection on `search-traces` / `get-trace` / fat reads, `MLFLOW_TOOLS` / `MLFLOW_DISABLE` 8 categories, `search-tools` meta-tool.
+- **Apps SDK card** — `compare-runs` renders as a side-by-side card on ChatGPT clients (run summary + metric/param tables with diff highlight) via `_meta["openai/outputTemplate"]`. Claude clients receive the same JSON content.
+- **stdio + Streamable HTTP** — defaults to stdio. Set `MCP_TRANSPORT=http` for ChatGPT Apps SDK or remote clients (Bearer auth via `MCP_HTTP_TOKEN`).
 
 ## Try this — 5 prompts
 
@@ -98,8 +100,15 @@ node dist/index.js
 | `MLFLOW_ALLOW_WRITE` | ❌ | `false` | Set `true` to enable mutations (create/update/delete) |
 | `MLFLOW_TOOLS` | ❌ | — | Comma-sep allowlist of categories. Biggest token saver. |
 | `MLFLOW_DISABLE` | ❌ | — | Comma-sep denylist. Ignored when `MLFLOW_TOOLS` is set. |
+| `MCP_TRANSPORT` | ❌ | `stdio` | `http` to enable Streamable HTTP transport |
+| `MCP_HTTP_TOKEN` | conditional | — | Bearer token. Required when `MCP_TRANSPORT=http` |
+| `MCP_HTTP_PORT` | ❌ | `3000` | HTTP listen port |
+| `MCP_HTTP_HOST` | ❌ | `127.0.0.1` | HTTP bind host (DNS rebinding protection auto-enabled for localhost) |
+| `MCP_HTTP_SKIP_AUTH` | ❌ | `false` | Skip Bearer auth — e.g. behind a reverse proxy that handles it |
 
 **Categories** (8): `experiments`, `runs`, `registry`, `logged-models`, `traces`, `assessments`, `webhooks`, `prompts`.
+
+When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (public liveness).
 
 ### Databricks managed MLflow
 

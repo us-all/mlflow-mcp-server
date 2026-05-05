@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.11.0** (2026-05-05): Apps SDK UI 카드 — `compare-runs` 도구 결과를 `_meta["openai/outputTemplate"]` 통해 ChatGPT/Apps SDK 클라이언트에서 카드로 렌더 (run summary + metric/param 테이블, differing_params 하이라이트). 새 리소스 `ui://widget/compare-runs.html` (`text/html+skybridge`). Claude 클라이언트는 `_meta` 무시 — non-breaking. 빌드 시 `src/ui/*.html`을 `dist/ui/`로 자동 복사.
 - **v1.10.0** (2026-05-05): `startMcpServer` 채택 — toolkit v1.2.0의 런타임 헬퍼로 stdio 부트스트랩을 1줄로 교체. `MCP_TRANSPORT=http`로 Streamable HTTP transport 옵트인 가능 (기본 stdio). Bearer 인증, `/health` 엔드포인트. 기존 stdio 사용자 영향 0.
 - **v1.9.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.0` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.9.0** (2026-05-04): MCP Prompt `analyze-failed-traces` 추가 — 기존 `debug-failed-traces`(one-shot 조사)와 보완. 현재 윈도우 vs 직전 윈도우 비교로 실패율 추세, top N 실패 패턴 by 임팩트, 새 regression 식별. MLflow 3 GenAI 트레이싱 흐름 + 가시성 sprint Week 2 P0 항목.

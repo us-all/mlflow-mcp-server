@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Compare Runs</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fff; --fg: #1f2328; --muted: #57606a; --border: #d0d7de;
+    --diff: #fff8c5; --hl: #ddf4ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --fg: #c9d1d9; --muted: #8b949e; --border: #30363d;
+      --diff: #3a2700; --hl: #051a37; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--fg); background: var(--bg); padding: 16px; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 16px 0 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  th { font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  tr.differs { background: var(--diff); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; }
+  .pill { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; text-transform: uppercase; background: var(--hl); color: var(--fg); }
+  .empty { color: var(--muted); font-style: italic; font-size: 12px; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div id="app">Loading…</div>
+<script>
+(function(){
+  function escape(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  function fmtNum(v){
+    if (v == null) return '<span class="empty">—</span>';
+    if (typeof v !== 'number') return escape(v);
+    return Number.isInteger(v) ? v.toString() : v.toFixed(4);
+  }
+  function fmtTs(ms){ if(!ms) return ''; const d = new Date(Number(ms)); return d.toISOString().replace('T',' ').slice(0,19); }
+  function shortId(id){ return id ? id.slice(0,8) : ''; }
+
+  function render(d) {
+    if (!d) return '<p class="empty">No data.</p>';
+    const runs = Array.isArray(d.runs) ? d.runs : [];
+    const metrics = d.metrics || {};
+    const paramsTable = d.params || {};
+    const differing = new Set(d.differing_params || []);
+
+    const summaryRows = runs.map(r => `<tr>
+      <td class="mono">${escape(shortId(r.run_id))}</td>
+      <td>${escape(r.run_name || '')}</td>
+      <td>${escape(r.status || '')}</td>
+      <td class="mono">${escape(fmtTs(r.start_time))}</td>
+    </tr>`).join('');
+
+    const metricKeys = Object.keys(metrics).sort();
+    const paramKeys = Object.keys(paramsTable).sort();
+
+    const metricRows = metricKeys.length ? metricKeys.map(k => `<tr>
+      <td class="mono">${escape(k)}</td>
+      ${runs.map(r => `<td class="num">${fmtNum(metrics[k]?.[r.run_id])}</td>`).join('')}
+    </tr>`).join('') : `<tr><td colspan="${runs.length+1}"><span class="empty">No metrics.</span></td></tr>`;
+
+    const paramRows = paramKeys.length ? paramKeys.map(k => `<tr class="${differing.has(k) ? 'differs' : ''}">
+      <td class="mono">${escape(k)} ${differing.has(k) ? '<span class="pill">differs</span>' : ''}</td>
+      ${runs.map(r => `<td>${escape(paramsTable[k]?.[r.run_id] ?? '')}</td>`).join('')}
+    </tr>`).join('') : `<tr><td colspan="${runs.length+1}"><span class="empty">No params.</span></td></tr>`;
+
+    const colHeaders = runs.map(r => `<th class="mono">${escape(shortId(r.run_id))}</th>`).join('');
+
+    return `
+      <h1>Compare ${runs.length} runs</h1>
+      <div class="meta">${escape(differing.size)} differing parameter${differing.size === 1 ? '' : 's'} · ${escape(metricKeys.length)} metric${metricKeys.length === 1 ? '' : 's'} · ${escape(paramKeys.length)} param${paramKeys.length === 1 ? '' : 's'}</div>
+
+      <h2>Runs</h2>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Started</th></tr></thead>
+        <tbody>${summaryRows}</tbody>
+      </table>
+
+      <h2>Metrics</h2>
+      <table>
+        <thead><tr><th>Key</th>${colHeaders}</tr></thead>
+        <tbody>${metricRows}</tbody>
+      </table>
+
+      <h2>Parameters</h2>
+      <table>
+        <thead><tr><th>Key</th>${colHeaders}</tr></thead>
+        <tbody>${paramRows}</tbody>
+      </table>
+    `;
+  }
+  function update(){ document.getElementById('app').innerHTML = render(window.openai && window.openai.toolOutput); }
+  update();
+  window.addEventListener('openai:set_globals', update);
+})();
+</script>
+</body>
+</html>
