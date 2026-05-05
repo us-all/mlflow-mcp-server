@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { startMcpServer } from "@us-all/mcp-toolkit/runtime";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler } from "./tools/utils.js";
 import { registerPrompts } from "./prompts.js";
@@ -271,13 +271,7 @@ tool("search-tools",
 registerPrompts(server);
 registerResources(server);
 
-async function main() {
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error("MLflow MCP server running on stdio");
-}
-
-main().catch((error) => {
+startMcpServer(server).catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
