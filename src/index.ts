@@ -166,7 +166,25 @@ tool("set-run-tag", "Set a tag on a run", setRunTagSchema.shape, wrapToolHandler
 tool("delete-run-tag", "Delete a tag from a run", deleteRunTagSchema.shape, wrapToolHandler(deleteRunTag));
 tool("list-artifacts", "List artifacts under a run's artifact directory", listArtifactsSchema.shape, wrapToolHandler(listArtifacts));
 tool("get-best-run", "Find the run with the best (max/min) value of a metric in an experiment", getBestRunSchema.shape, wrapToolHandler(getBestRun));
-tool("compare-runs", "Side-by-side metric/param comparison across multiple runs", compareRunsSchema.shape, wrapToolHandler(compareRuns));
+// Card-aware wrapper: see datadog `slo-compliance-snapshot` for the same pattern.
+const COMPARE_RUNS_CARD_URI = "ui://widget/compare-runs.html";
+const wrappedCompareRuns = wrapToolHandler(compareRuns);
+async function compareRunsWithCard(args: Parameters<typeof wrappedCompareRuns>[0]) {
+  const result = await wrappedCompareRuns(args);
+  if (result.isError) return result;
+  try {
+    const structured = JSON.parse(result.content[0].text);
+    return {
+      ...result,
+      structuredContent: structured,
+      _meta: {
+        "openai/outputTemplate": COMPARE_RUNS_CARD_URI,
+        "ui.resourceUri": COMPARE_RUNS_CARD_URI,
+      },
+    };
+  } catch { return result; }
+}
+tool("compare-runs", "Side-by-side metric/param comparison across multiple runs. Renders an Apps SDK card on ChatGPT clients (Claude clients receive the same JSON text).", compareRunsSchema.shape, compareRunsWithCard);
 tool("search-runs-by-tags", "Find runs whose tags match all of the given key/value pairs", searchRunsByTagsSchema.shape, wrapToolHandler(searchRunsByTags));
 
 // --- Registered Models ---

@@ -1,5 +1,11 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { mlflowClient } from "./client.js";
+
+const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), "ui");
+const COMPARE_RUNS_HTML = readFileSync(join(UI_DIR, "compare-runs.html"), "utf-8");
 
 /**
  * MCP Resources for hot MLflow entities.
@@ -162,5 +168,29 @@ export function registerResources(server: McpServer): void {
       });
       return asJson(uri.toString(), data);
     },
+  );
+
+  // --- Apps SDK UI templates (ui:// scheme) ---
+  // Rendered by ChatGPT / Apps SDK clients via _meta["openai/outputTemplate"].
+  // Claude clients ignore the metadata and use the tool's text content instead.
+  server.registerResource(
+    "compare-runs-card",
+    "ui://widget/compare-runs.html",
+    {
+      title: "Compare Runs card",
+      description: "Apps SDK UI template rendered with compare-runs tool output",
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/outputTemplate": "ui://widget/compare-runs.html",
+        "ui.resourceUri": "ui://widget/compare-runs.html",
+      },
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.toString(),
+        mimeType: "text/html+skybridge",
+        text: COMPARE_RUNS_HTML,
+      }],
+    }),
   );
 }
