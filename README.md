@@ -6,7 +6,7 @@
 
 [![npm](https://img.shields.io/npm/v/@us-all/mlflow-mcp)](https://www.npmjs.com/package/@us-all/mlflow-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/mlflow-mcp)](https://www.npmjs.com/package/@us-all/mlflow-mcp)
-[![tools](https://img.shields.io/badge/tools-78-blue)](#tools)
+[![tools](https://img.shields.io/badge/tools-82-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
 ## What it does that others don't
@@ -152,7 +152,7 @@ URI-based read-only access:
 
 `mlflow://run/{runId}`, `mlflow://experiment/{expId}`, `mlflow://experiment-by-name/{name}`, `mlflow://registered-model/{name}`, `mlflow://model-version/{name}/{version}`, `mlflow://trace/{traceId}`, `mlflow://run/{runId}/artifacts`, `mlflow://experiment/{expId}/runs`, `mlflow://registered-model/{name}/versions`.
 
-## Tools (78)
+## Tools (82)
 
 8 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 
@@ -162,7 +162,7 @@ URI-based read-only access:
 ### Experiments (9)
 `create-experiment`, `search-experiments`, `get-experiment`, `get-experiment-by-name`, `update-experiment`, `delete-experiment`, `restore-experiment`, `set-experiment-tag`, `delete-experiment-tag`
 
-### Runs (17)
+### Runs (18)
 `create-run`, `get-run`, `search-runs`, `update-run`, `delete-run`, `restore-run`, `log-metric`, `log-param`, `log-batch`, `log-inputs`, `get-metric-history`, `set-run-tag`, `delete-run-tag`, `list-artifacts`, `get-best-run`, `compare-runs`, `search-runs-by-tags`, `summarize-run` *(aggregation)*
 
 ### Registered Models (12)
