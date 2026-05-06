@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.us-all/mlflow",
-  "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
+  "description": "MLflow MCP — experiments, runs, registered models, versions, traces, assessments (MLflow 3)",
   "repository": {
     "url": "https://github.com/us-all/mlflow-mcp-server",
     "source": "github"
