@@ -1,0 +1,58 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.us-all/mlflow",
+  "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
+  "repository": {
+    "url": "https://github.com/us-all/mlflow-mcp-server",
+    "source": "github"
+  },
+  "version": "1.11.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@us-all/mlflow-mcp",
+      "version": "1.11.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MLFLOW_TRACKING_URI",
+          "description": "MLflow tracking server URI (e.g. http://localhost:5050, https://mlflow.example.com).",
+          "isRequired": true
+        },
+        {
+          "name": "MLFLOW_TRACKING_TOKEN",
+          "description": "Bearer token for authenticated MLflow servers (e.g. Databricks).",
+          "isSecret": true
+        },
+        {
+          "name": "MLFLOW_TRACKING_USERNAME",
+          "description": "Basic-auth username (alternative to token)."
+        },
+        {
+          "name": "MLFLOW_TRACKING_PASSWORD",
+          "description": "Basic-auth password (alternative to token).",
+          "isSecret": true
+        },
+        {
+          "name": "MLFLOW_EXPERIMENT_ID",
+          "description": "Default experiment ID for run-creation tools."
+        },
+        {
+          "name": "MLFLOW_TOOLS",
+          "description": "Comma-separated category allowlist. Default: all categories enabled."
+        },
+        {
+          "name": "MLFLOW_DISABLE",
+          "description": "Comma-separated category disablelist."
+        },
+        {
+          "name": "MLFLOW_ALLOW_WRITE",
+          "description": "Set to 'true' to enable write/destructive tools. Default read-only.",
+          "default": "false"
+        }
+      ]
+    }
+  ]
+}
