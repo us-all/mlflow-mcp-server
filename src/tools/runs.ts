@@ -41,7 +41,7 @@ export const getRunSchema = z.object({
 
 export async function getRun(params: z.infer<typeof getRunSchema>) {
   const data = await mlflowClient.get("/runs/get", { run_id: params.runId });
-  if (params.extractFields) return data;
+  if (params.extractFields) return applyExtractFields(data, params.extractFields);
   return applyExtractFields(
     data,
     "run.info.run_id,run.info.experiment_id,run.info.status,run.info.start_time,run.info.end_time,run.data.metrics,run.data.params,run.data.tags",
@@ -64,7 +64,7 @@ export async function searchRuns(params: z.infer<typeof searchRunsSchema>) {
   const ids = params.experimentIds && params.experimentIds.length > 0
     ? params.experimentIds
     : [resolveExperimentId()];
-  return mlflowClient.post("/runs/search", {
+  const data = await mlflowClient.post("/runs/search", {
     experiment_ids: ids,
     filter: params.filter,
     run_view_type: params.runViewType,
@@ -72,6 +72,8 @@ export async function searchRuns(params: z.infer<typeof searchRunsSchema>) {
     order_by: params.orderBy,
     page_token: params.pageToken,
   });
+  if (params.extractFields) return applyExtractFields(data, params.extractFields);
+  return data;
 }
 
 // --- update-run ---

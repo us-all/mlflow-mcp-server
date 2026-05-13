@@ -2,7 +2,7 @@
 
 > **The widest-coverage MLflow MCP — including MLflow 3 traces, attachments, prompt-optimization, and webhooks that no other MCP exposes.**
 >
-> 78 tools across experiments, runs, registry, logged models, traces, assessments, webhooks, prompt-optimization. Aggregation tools (`summarize-experiment`, `summarize-run`) fold 3–5 round-trips into one structured response with already-fetched metric stats.
+> 82 tools across experiments, runs, registry, logged models, traces, assessments, webhooks, prompt-optimization. Aggregation tools (`summarize-experiment`, `summarize-run`) fold 3–5 round-trips into one structured response with already-fetched metric stats.
 
 [![npm](https://img.shields.io/npm/v/@us-all/mlflow-mcp)](https://www.npmjs.com/package/@us-all/mlflow-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/mlflow-mcp)](https://www.npmjs.com/package/@us-all/mlflow-mcp)
@@ -16,7 +16,7 @@
 - **Aggregation tools** — `summarize-experiment` returns experiment + topN runs + metric stats (min/max/mean) in one call from already-fetched data, zero extra round-trips. `summarize-run` dedups `metricHistory.history.*.key` (~100KB savings on 4k-point series).
 - **MCP Prompts** (4) — `debug-failed-traces`, `promote-best-run`, `compare-top-runs`, `annotate-trace-quality`. Workflow templates the model invokes directly.
 - **MCP Resources** (6) — `mlflow://run/{runId}`, `mlflow://experiment/{expId}`, `mlflow://run/{runId}/artifacts`, `mlflow://experiment/{expId}/runs`, `mlflow://registered-model/{name}/versions`, `mlflow://trace/{traceId}`.
-- **Token-efficient by design** — `extractFields` projection on `search-traces` / `get-trace` / fat reads, `MLFLOW_TOOLS` / `MLFLOW_DISABLE` 8 categories, `search-tools` meta-tool.
+- **Token-efficient by design** — `extractFields` projection on `get-run` / `search-runs` / `search-traces` / `get-trace` / fat reads, `MLFLOW_TOOLS` / `MLFLOW_DISABLE` 8 categories, `search-tools` meta-tool.
 - **Apps SDK card** — `compare-runs` renders as a side-by-side card on ChatGPT clients (run summary + metric/param tables with diff highlight) via `_meta["openai/outputTemplate"]`. Claude clients receive the same JSON content.
 - **stdio + Streamable HTTP** — defaults to stdio. Set `MCP_TRANSPORT=http` for ChatGPT Apps SDK or remote clients (Bearer auth via `MCP_HTTP_TOKEN`).
 
@@ -130,7 +130,7 @@ The MLflow REST API path (`/api/2.0/mlflow/...`) is identical between OSS and Da
 | typical (`MLFLOW_TOOLS=experiments,runs,registry,traces`) | 54 | 5,900 | −36% |
 | narrow (`MLFLOW_TOOLS=experiments,runs`) | 27 | **3,200** | **−66%** |
 
-Plus `extractFields` on `search-traces` / `get-trace` / `summarize-experiment` — caller can scope response fields per call.
+Plus `extractFields` on `get-run` / `search-runs` / `search-traces` / `get-trace` / `summarize-experiment` — caller can scope response fields per call.
 
 ### Read-only mode
 
@@ -157,6 +157,8 @@ URI-based read-only access:
 
 8 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 
+`get-run`, `search-runs`, `search-traces`, `get-trace`, and `summarize-experiment` accept `extractFields` for response slicing.
+
 <details>
 <summary>Full tool list</summary>
 
@@ -177,8 +179,6 @@ URI-based read-only access:
 
 ### Traces (8)
 `search-traces`, `get-trace`, `get-trace-info`, `delete-traces`, `set-trace-tag`, `delete-trace-tag`, `list-trace-attachments`, `get-trace-attachment`
-
-`search-traces`, `get-trace`, and `summarize-experiment` accept `extractFields` for response slicing.
 
 ### Assessments (5)
 `log-feedback`, `log-expectation`, `get-assessment`, `update-assessment`, `delete-assessment`
@@ -237,7 +237,7 @@ Targets MLflow 3.5.1+ (uses v3 traces/assessments REST). Validated end-to-end ag
 
 ## Tech stack
 
-Node.js 20+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` • zod • dotenv • vitest.
+Node.js 22+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` • zod • dotenv • vitest.
 
 ## References
 

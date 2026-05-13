@@ -18,7 +18,7 @@ write-gated tool returns:
 Write operations are disabled. Set MLFLOW_ALLOW_WRITE=true to enable.
 ```
 
-### Write-Gated Tools (47)
+### Write-Gated Tools (51)
 
 **Experiments** — `create-experiment`, `update-experiment`, `delete-experiment`,
 `restore-experiment`, `set-experiment-tag`, `delete-experiment-tag`

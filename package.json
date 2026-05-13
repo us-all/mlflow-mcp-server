@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.11.2",
+  "version": "1.11.3",
   "mcpName": "io.github.us-all/mlflow",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
@@ -11,6 +11,7 @@
   "files": [
     "dist",
     "README.md",
+    "server.json",
     "LICENSE"
   ],
   "scripts": {

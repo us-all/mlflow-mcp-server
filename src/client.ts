@@ -1,5 +1,9 @@
 import { config } from "./config.js";
 
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 250;
+
 export class MlflowError extends Error {
   status: number;
   body: unknown;
@@ -10,6 +14,22 @@ export class MlflowError extends Error {
     this.status = status;
     this.body = body;
   }
+}
+
+function isRetryableError(error: unknown): boolean {
+  const status = (error as { status?: number }).status;
+  const name = (error as { name?: string }).name;
+  return (
+    name === "AbortError" ||
+    name === "TimeoutError" ||
+    status === 429 ||
+    (status !== undefined && status >= 500 && status < 600) ||
+    status === undefined
+  );
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 class MlflowClient {
@@ -68,39 +88,51 @@ class MlflowClient {
       headers["Content-Type"] = "application/json";
     }
 
-    const response = await fetch(url, {
-      method,
-      headers,
-      body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
-    });
-
-    if (!response.ok) {
-      let body: unknown;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        body = await response.json();
-      } catch {
-        body = await response.text().catch(() => "");
+        const response = await fetch(url, {
+          method,
+          headers,
+          body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+
+        if (!response.ok) {
+          let body: unknown;
+          try {
+            body = await response.json();
+          } catch {
+            body = await response.text().catch(() => "");
+          }
+          throw new MlflowError(
+            `HTTP ${response.status}: ${response.statusText}`,
+            response.status,
+            body,
+          );
+        }
+
+        if (response.status === 204 || response.headers.get("content-length") === "0") {
+          return {} as T;
+        }
+
+        const text = await response.text();
+        if (!text) {
+          return {} as T;
+        }
+        try {
+          return JSON.parse(text) as T;
+        } catch {
+          return text as unknown as T;
+        }
+      } catch (error) {
+        if (!isRetryableError(error) || attempt === MAX_RETRIES) {
+          throw error;
+        }
+        const jitter = Math.floor(Math.random() * 100);
+        await sleep(BASE_RETRY_DELAY_MS * Math.pow(2, attempt) + jitter);
       }
-      throw new MlflowError(
-        `HTTP ${response.status}: ${response.statusText}`,
-        response.status,
-        body,
-      );
     }
-
-    if (response.status === 204 || response.headers.get("content-length") === "0") {
-      return {} as T;
-    }
-
-    const text = await response.text();
-    if (!text) {
-      return {} as T;
-    }
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      return text as unknown as T;
-    }
+    throw new Error("Retry failed");
   }
 
   async get<T = unknown>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
