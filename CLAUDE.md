@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.11.4** (2026-05-15): `@us-all/mcp-toolkit ^1.2.2` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.11.2** (2026-05-06): MCP Server Registry 발행 — `mcpName: "io.github.us-all/mlflow"` 추가 + 루트 `server.json` (MLFLOW_TRACKING_URI required + token/basic-auth optional 메타데이터). 코드 변경 0줄.
 - **v1.11.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.1` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.11.0** (2026-05-05): Apps SDK UI 카드 — `compare-runs` 도구 결과를 `_meta["openai/outputTemplate"]` 통해 ChatGPT/Apps SDK 클라이언트에서 카드로 렌더 (run summary + metric/param 테이블, differing_params 하이라이트). 새 리소스 `ui://widget/compare-runs.html` (`text/html+skybridge`). Claude 클라이언트는 `_meta` 무시 — non-breaking. 빌드 시 `src/ui/*.html`을 `dist/ui/`로 자동 복사.
