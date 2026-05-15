@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "mcpName": "io.github.us-all/mlflow",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@us-all/mcp-toolkit": "^1.2.2",
+    "@us-all/mcp-toolkit": "^1.2.3",
     "dotenv": "^17.4.2",
     "zod": "^4.4.2"
   },
@@ -42,6 +42,13 @@
     "node": ">=22.0.0"
   },
   "packageManager": "pnpm@10.30.2",
+  "pnpm": {
+    "overrides": {
+      "hono": "^4.12.18",
+      "fast-uri": "^3.1.2",
+      "ip-address": "^10.1.1"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/us-all/mlflow-mcp-server"
