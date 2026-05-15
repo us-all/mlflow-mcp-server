@@ -31,7 +31,7 @@ src/
 dev/
 ├── seed.py           # demo 실험/런/모델/트레이스 시딩 (idempotent)
 └── smoke.mjs         # 66 도구 + 4 프롬프트 전수 호출 자동 테스트
-docker-compose.yml    # mlflow v3.11.1 + seed + mcp 프로필
+docker-compose.yml    # mlflow v3.12.0 + seed + mcp 프로필
 ```
 
 ## 로컬 검증
@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.12.0** (2026-05-15): MLflow 3.12.0 트래킹 — docker-compose 핀 3.11.1 → 3.12.0 (multimodal trace attachments + 1000-trace pagination 한계 제거). 기존 `list-trace-attachments`/`get-trace-attachment`(v1.7.0)는 attachment payload binary 형식 변경 가능성 있어 라이브 smoke 회귀 후속 필요. `search-traces`는 이미 `max_results`/`page_token` pass-through라 pagination 자동 혜택(코드 변경 0줄). `@us-all/mcp-toolkit` ^1.2.1 → ^1.2.2 dep 핀 동반 cascade.
 - **v1.11.2** (2026-05-06): MCP Server Registry 발행 — `mcpName: "io.github.us-all/mlflow"` 추가 + 루트 `server.json` (MLFLOW_TRACKING_URI required + token/basic-auth optional 메타데이터). 코드 변경 0줄.
 - **v1.11.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.1` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.11.0** (2026-05-05): Apps SDK UI 카드 — `compare-runs` 도구 결과를 `_meta["openai/outputTemplate"]` 통해 ChatGPT/Apps SDK 클라이언트에서 카드로 렌더 (run summary + metric/param 테이블, differing_params 하이라이트). 새 리소스 `ui://widget/compare-runs.html` (`text/html+skybridge`). Claude 클라이언트는 `_meta` 무시 — non-breaking. 빌드 시 `src/ui/*.html`을 `dist/ui/`로 자동 복사.

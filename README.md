@@ -233,7 +233,7 @@ Built on [`@us-all/mcp-toolkit`](https://github.com/us-all/mcp-toolkit):
 - `createWrapToolHandler` — Bearer/basic credential redaction + MlflowError extraction
 - `search-tools` meta-tool
 
-Targets MLflow 3.5.1+ (uses v3 traces/assessments REST). Validated end-to-end against MLflow 3.11.1.
+Targets MLflow 3.5.1+ (uses v3 traces/assessments REST). Dev compose pinned to MLflow 3.12.0 (multimodal trace attachments + paginated trace search).
 
 ## Tech stack
 
