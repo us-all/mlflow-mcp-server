@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.12.1** (2026-05-15): `@us-all/mcp-toolkit ^1.2.3` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.12.0** (2026-05-15): MLflow 3.12.0 트래킹 — docker-compose 핀 3.11.1 → 3.12.0 (multimodal trace attachments + 1000-trace pagination 한계 제거). 기존 `list-trace-attachments`/`get-trace-attachment`(v1.7.0)는 attachment payload binary 형식 변경 가능성 있어 라이브 smoke 회귀 후속 필요. `search-traces`는 이미 `max_results`/`page_token` pass-through라 pagination 자동 혜택(코드 변경 0줄). `@us-all/mcp-toolkit` ^1.2.1 → ^1.2.2 dep 핀 동반 cascade.
 - **v1.11.2** (2026-05-06): MCP Server Registry 발행 — `mcpName: "io.github.us-all/mlflow"` 추가 + 루트 `server.json` (MLFLOW_TRACKING_URI required + token/basic-auth optional 메타데이터). 코드 변경 0줄.
 - **v1.11.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.1` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
