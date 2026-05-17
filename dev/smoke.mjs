@@ -203,6 +203,36 @@ const PREFIX = `mcp-smoke-${Date.now()}`;
       results.push({ name: "extract_fields:get-trace", ok: true });
       console.log(`✓ extract_fields:get-trace`);
     }
+
+    // maxResults clamp — server-side cap is 500 on MLflow 3.12+. Without the
+    // client-side Math.min, the request errors out as INVALID_PARAMETER_VALUE.
+    try {
+      const clamped = await call("search-traces", { experimentIds: ["1"], maxResults: 1000 });
+      if (!Array.isArray(clamped?.traces)) throw new Error(`unexpected: ${JSON.stringify(clamped).slice(0, 200)}`);
+      results.push({ name: "search-traces:maxResults-clamp", ok: true });
+      console.log(`✓ search-traces:maxResults-clamp (1000 -> server cap)`);
+    } catch (e) {
+      results.push({ name: "search-traces:maxResults-clamp", ok: false, info: String(e.message ?? e) });
+      console.log(`✗ search-traces:maxResults-clamp — ${e.message ?? e}`);
+    }
+
+    // pageToken round-trip — verify the token from page 1 is accepted on page 2.
+    const page1 = await call("search-traces", { experimentIds: ["1"], maxResults: 1 });
+    const token = page1?.next_page_token;
+    if (!token) {
+      results.push({ name: "search-traces:pageToken-roundtrip", ok: false, info: "no next_page_token on page 1 (need ≥2 seeded traces)" });
+      console.log(`✗ search-traces:pageToken-roundtrip — no token`);
+    } else {
+      try {
+        const page2 = await call("search-traces", { experimentIds: ["1"], maxResults: 1, pageToken: token });
+        if (!Array.isArray(page2?.traces)) throw new Error(`unexpected: ${JSON.stringify(page2).slice(0, 200)}`);
+        results.push({ name: "search-traces:pageToken-roundtrip", ok: true });
+        console.log(`✓ search-traces:pageToken-roundtrip`);
+      } catch (e) {
+        results.push({ name: "search-traces:pageToken-roundtrip", ok: false, info: String(e.message ?? e) });
+        console.log(`✗ search-traces:pageToken-roundtrip — ${e.message ?? e}`);
+      }
+    }
   }
 
   // === write: experiment ===
