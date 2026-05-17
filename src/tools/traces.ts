@@ -4,10 +4,16 @@ import { applyExtractFields, assertWriteAllowed, resolveExperimentId } from "./u
 
 // --- search-traces ---
 
+// MLflow 3.12 server-side caps trace search per-page at 500 (was 1000 in 3.11).
+// Anything above 500 returns INVALID_PARAMETER_VALUE. Use pageToken to fetch beyond.
+const TRACE_SEARCH_MAX_RESULTS_CAP = 500;
+
 export const searchTracesSchema = z.object({
   experimentIds: z.array(z.string()).optional().describe("Experiment IDs (defaults to MLFLOW_EXPERIMENT_ID)"),
   filter: z.string().optional().describe("Filter expression, e.g. \"tags.user = 'alice'\""),
-  maxResults: z.coerce.number().optional().default(100).describe("Max results (default 100)"),
+  maxResults: z.coerce.number().optional().default(100).describe(
+    "Max results per page (default 100). MLflow 3.12+ server-side cap = 500; use pageToken to paginate beyond.",
+  ),
   orderBy: z.array(z.string()).optional(),
   pageToken: z.string().optional(),
   extractFields: z.string().optional().describe(
@@ -25,7 +31,7 @@ export async function searchTraces(params: z.infer<typeof searchTracesSchema>) {
       mlflow_experiment: { experiment_id },
     })),
     filter: params.filter,
-    max_results: params.maxResults,
+    max_results: Math.min(params.maxResults, TRACE_SEARCH_MAX_RESULTS_CAP),
     order_by: params.orderBy,
     page_token: params.pageToken,
   });
@@ -114,11 +120,11 @@ export async function deleteTraceTag(params: z.infer<typeof deleteTraceTagSchema
   );
 }
 
-// --- list-trace-attachments (MLflow 3.9+) ---
+// --- list-trace-attachments (Databricks MLflow only) ---
 //
-// Read-only. The endpoint and response shape are not formally documented in the
-// public MLflow REST reference at the time of writing — we pass through whatever
-// the server returns. Callers will get a 404 from older MLflow versions.
+// The `/api/3.0/mlflow/traces/{id}/attachments` route is NOT registered by OSS
+// MLflow (verified empty in 3.12.0 handler list). Calls against OSS return 404.
+// These tools target Databricks MLflow's trace attachment extension.
 
 export const listTraceAttachmentsSchema = z.object({
   traceId: z.string().describe("Trace ID"),
@@ -130,7 +136,7 @@ export async function listTraceAttachments(params: z.infer<typeof listTraceAttac
   );
 }
 
-// --- get-trace-attachment (MLflow 3.9+) ---
+// --- get-trace-attachment (Databricks MLflow only — OSS returns 404) ---
 
 export const getTraceAttachmentSchema = z.object({
   traceId: z.string().describe("Trace ID"),

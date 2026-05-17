@@ -237,8 +237,8 @@ tool("get-trace-info", "Retrieve trace metadata only (no spans)", getTraceInfoSc
 tool("delete-traces", "Delete traces by ID or older than a timestamp", deleteTracesSchema.shape, wrapToolHandler(deleteTraces));
 tool("set-trace-tag", "Add a custom key-value tag to a trace", setTraceTagSchema.shape, wrapToolHandler(setTraceTag));
 tool("delete-trace-tag", "Remove a tag from a trace", deleteTraceTagSchema.shape, wrapToolHandler(deleteTraceTag));
-tool("list-trace-attachments", "List attachments on a trace (MLflow 3.9+)", listTraceAttachmentsSchema.shape, wrapToolHandler(listTraceAttachments));
-tool("get-trace-attachment", "Get a specific attachment on a trace by ID (MLflow 3.9+)", getTraceAttachmentSchema.shape, wrapToolHandler(getTraceAttachment));
+tool("list-trace-attachments", "List attachments on a trace (Databricks MLflow only — OSS servers return 404)", listTraceAttachmentsSchema.shape, wrapToolHandler(listTraceAttachments));
+tool("get-trace-attachment", "Get a specific attachment on a trace by ID (Databricks MLflow only — OSS servers return 404)", getTraceAttachmentSchema.shape, wrapToolHandler(getTraceAttachment));
 
 // --- Assessments (GenAI evaluation) ---
 currentCategory = "assessments";
