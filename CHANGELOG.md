@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.4] - 2026-05-30
+
+### Changed
+
+- **README**: surface two known constraints up front so callers don't infer them from error responses.
+  - Trace attachments (`list-trace-attachments` / `get-trace-attachment`) are Databricks-only. Tagline, feature list, comparison table, and example prompt now say so explicitly. (Tool descriptions were already corrected in v1.12.2; this brings the README in line.)
+  - `search-traces.maxResults` is clamped to 500 per page. New "Limitations & gotchas" section documents the cap + the `nextPageToken` loop for larger result sets.
+
+(Documentation-only release. No code or schema change. CLAUDE.md changelog already reflected these in v1.12.2.)
+
 ## [1.5.1] - 2026-05-01
 
 ### Added

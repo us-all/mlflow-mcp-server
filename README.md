@@ -1,6 +1,6 @@
 # MLflow MCP Server
 
-> **The widest-coverage MLflow MCP — including MLflow 3 traces, attachments, prompt-optimization, and webhooks that no other MCP exposes.**
+> **The widest-coverage MLflow MCP — including MLflow 3 traces, prompt-optimization, webhooks, and Databricks trace attachments that no other MCP exposes.**
 >
 > 82 tools across experiments, runs, registry, logged models, traces, assessments, webhooks, prompt-optimization. Aggregation tools (`summarize-experiment`, `summarize-run`) fold 3–5 round-trips into one structured response with already-fetched metric stats.
 
@@ -12,7 +12,7 @@
 
 ## What it does that others don't
 
-- **Full coverage** — only third-party MLflow MCP shipping prompt-optimization-jobs (5 tools), webhooks (6), MLflow 3 LoggedModel (8), and trace attachments (`list-trace-attachments`, `get-trace-attachment`).
+- **Full coverage** — only third-party MLflow MCP shipping prompt-optimization-jobs (5 tools), webhooks (6), MLflow 3 LoggedModel (8), and Databricks trace attachments (`list-trace-attachments`, `get-trace-attachment` — Databricks MLflow only; OSS returns 404).
 - **Aggregation tools** — `summarize-experiment` returns experiment + topN runs + metric stats (min/max/mean) in one call from already-fetched data, zero extra round-trips. `summarize-run` dedups `metricHistory.history.*.key` (~100KB savings on 4k-point series).
 - **MCP Prompts** (4) — `debug-failed-traces`, `promote-best-run`, `compare-top-runs`, `annotate-trace-quality`. Workflow templates the model invokes directly.
 - **MCP Resources** (6) — `mlflow://run/{runId}`, `mlflow://experiment/{expId}`, `mlflow://run/{runId}/artifacts`, `mlflow://experiment/{expId}/runs`, `mlflow://registered-model/{name}/versions`, `mlflow://trace/{traceId}`.
@@ -28,7 +28,7 @@ Connect the server to Claude Desktop or Claude Code, then paste any of these:
 2. **Failure mode clustering** — *"Find traces with `status=ERROR` from the last 24h in experiment 12. Group the failures by exception type and surface the 3 most common."*
 3. **Run comparison** — *"Compare the top 5 runs of experiment 12 by `validation_loss`. Show differing hyperparameters in a table."*
 4. **Model promotion** — *"Get the latest version of `recommendation_v2` registered model with the `champion` alias. Show its training metrics + lineage to the source run."*
-5. **Trace deep-dive** — *"Pull trace `tr-abc123` with all attachments. Highlight slow spans and any failed feedback annotations."*
+5. **Trace deep-dive** — *"Pull trace `tr-abc123`. Highlight slow spans and any failed feedback annotations."* (Add `list-trace-attachments` on Databricks workspaces.)
 
 ## When to use this vs alternatives
 
@@ -36,7 +36,7 @@ Connect the server to Claude Desktop or Claude Code, then paste any of these:
 |--|------------------------|---------------------|------------------------------|
 | Tool count | ~9 (trace-only) | ~25 | **78** |
 | MLflow 3 LoggedModel | ❌ | ✅ | ✅ |
-| Trace attachments | ❌ | ❌ | ✅ |
+| Trace attachments | ❌ | ❌ | ✅ Databricks only |
 | Prompt-optimization-jobs | ❌ | ❌ | ✅ |
 | Webhooks | ❌ | ❌ | ✅ |
 | Aggregation tools | ❌ | ❌ | ✅ `summarize-experiment`, `summarize-run` |
@@ -137,6 +137,13 @@ Plus `extractFields` on `get-run` / `search-runs` / `search-traces` / `get-trace
 By default, all writes are blocked. The following require `MLFLOW_ALLOW_WRITE=true`:
 
 `create-experiment`, `update-experiment`, `delete-experiment`, `restore-experiment`, `set-experiment-tag`, `delete-experiment-tag`, `create-run`, `update-run`, `delete-run`, `restore-run`, `log-metric`, `log-param`, `log-batch`, `log-inputs`, `set-run-tag`, `delete-run-tag`, `create-registered-model`, `rename-registered-model`, `update-registered-model`, `delete-registered-model`, plus all model-version, logged-model, trace, assessment, webhook, and prompt-optimization writes.
+
+### Limitations & gotchas
+
+- **`search-traces.maxResults` is clamped to 500.** MLflow 3.12+ rejects per-page `max_results > 500` with `INVALID_PARAMETER_VALUE`. For larger result sets, loop on `nextPageToken` — total trace count is unbounded.
+- **Trace attachments are Databricks-only.** `list-trace-attachments` / `get-trace-attachment` call routes that OSS MLflow (verified through 3.12.0) returns 404 for. Tool descriptions surface this; calls against OSS return a structured `MlflowError`.
+- **`search-traces.maxResults` cap applies per page**, not per call — pagination still gets you the full set.
+- **Bearer / Basic auth code paths are not yet validated against live Databricks** (see open roadmap item). Works against OSS MLflow 3.12 (Bearer optional).
 
 ## MCP Prompts (4)
 
