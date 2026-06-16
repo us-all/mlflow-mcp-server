@@ -1,6 +1,6 @@
 {
   "name": "@us-all/mlflow-mcp",
-  "version": "1.12.5",
+  "version": "1.12.6",
   "mcpName": "io.github.us-all/mlflow",
   "description": "MLflow MCP server - experiments, runs, registered models, model versions, traces, and assessments",
   "type": "module",
@@ -36,7 +36,8 @@
     "@types/node": "^22.15.3",
     "@vitest/coverage-v8": "^4.1.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "vite": "^8.0.16"
   },
   "engines": {
     "node": ">=22.0.0"
