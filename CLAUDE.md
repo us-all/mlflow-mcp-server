@@ -51,6 +51,7 @@ pnpm build && node dev/smoke.mjs   # 76/76 통과 기대
 
 ## 최근 변경사항
 
+- **v1.12.7** (2026-06-16): `@us-all/mcp-toolkit ^1.2.5` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.12.2** (2026-05-17): 3.12.0 라이브 smoke 회귀 결과 반영. (1) `search-traces.maxResults` 클라이언트 clamp = 500 (MLflow 3.12+ 서버가 per-page max_results>500을 INVALID_PARAMETER_VALUE로 거부; v1.12.0 changelog 의 "1000-trace 한계 제거" 표현은 부정확이었음 — 실측 cap은 오히려 1000→500). pageToken으로 unbounded 페이지 순회는 정상. (2) `list-trace-attachments`/`get-trace-attachment` describe를 "Databricks MLflow only — OSS 서버는 404"로 정정. OSS MLflow 3.12.0 handler 목록에 attachment 라우트 0개 확인. v1.7.0 의 "MLflow 3.9+" 주석은 추측 기반이었음. 76/76 smoke 유지.
 - **v1.12.1** (2026-05-15): 보안 — `pnpm.overrides`에 fast-uri ^3.1.2 / hono ^4.12.18 / ip-address ^10.1.1 추가 (CVE-2026-6321/6322, 44455~44459, 42338 transitive 흡수). toolkit ^1.2.2 → ^1.2.3.
 - **v1.12.0** (2026-05-15): MLflow 3.12.0 트래킹 — docker-compose 핀 3.11.1 → 3.12.0. `search-traces`는 `max_results`/`page_token` pass-through라 코드 변경 0줄로 진행. attachment 도구 회귀 검증은 v1.12.2 에서 수행 → 위 항목 참조. `@us-all/mcp-toolkit` ^1.2.1 → ^1.2.2 dep 핀 동반 cascade.
